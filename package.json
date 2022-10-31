@@ -1,0 +1,24 @@
+{
+    "name": "vista_server",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "body-parser": "^1.20.1",
+        "cors": "^2.8.5",
+        "express": "^4.18.2",
+        "node-pre-gyp": "^0.17.0",
+        "nodemon": "^2.0.20",
+        "peer": "^0.2.10",
+        "sdp-transform": "^2.14.1",
+        "socket.io": "^4.5.3",
+        "socket.io-client": "^4.5.3",
+        "uuid": "^9.0.0",
+        "wrtc": "^0.4.7"
+    }
+}

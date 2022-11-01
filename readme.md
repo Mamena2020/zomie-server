@@ -1,3 +1,12 @@
+#run
+  - dev
+    - npm run dev
+    - nodemon server
+  - prod
+    - npm run start
+    - node server   
+
+
 socket info
   - server:   
   - flutter:  

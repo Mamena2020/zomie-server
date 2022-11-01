@@ -93,9 +93,7 @@ app.get("/check", async(req, res) => {
 
 /**
  * new update
- * add password & life time to rooms
- * check room exist api
- * producer remove after 10 disconnected
+ * fixing bug when user disconnected, to remove producer after some time
  * 
  *  
  *  
@@ -226,19 +224,18 @@ app.post("/create-room",
     async function({ body }, res) {
         try {
 
-            var date = new Date(Date.now())
 
-            var life_time
-            var password = null
-            if (body.password != undefined) {
-                password = body.password
+            var password = body.password
+            if (password == undefined || password == null) {
+                password = null
             }
-            if (body.life_time != undefined) {
+
+            var date = new Date(Date.now())
+            var life_time = addMinutes(date, 1); // default 1 minutes
+            if (body.life_time != undefined || body.life_time != null) {
                 life_time = addMinutes(date, body.life_time)
-            } else {
-                life_time = addMinutes(date, 1)
             }
-            console.log(date)
+
             var room_index = await createRoom(password, life_time)
             if (room_index < 0) {
                 throw "failed to create room"
@@ -247,6 +244,7 @@ app.post("/create-room",
             console.log("\x1b[34m", "Room created: " + rooms[room_index].id, "\x1b[0m")
             console.log("\x1b[34m", "password: " + rooms[room_index].password, "\x1b[0m")
             console.log("\x1b[34m", "life time: " + rooms[room_index].life_time, "\x1b[0m")
+            console.log(date)
 
             var data = {
                 room_id: rooms[room_index].id,
@@ -276,6 +274,13 @@ app.post("/check-room", async function({ body }, res) {
                 statusCode = 404
                 data = {
                     "message": "room not found"
+                }
+            } else {
+                if (rooms[room_index].password != null && rooms[room_index].password != body.password) {
+                    statusCode = 403
+                    data = {
+                        "message": "Wrong password"
+                    }
                 }
             }
         } catch (e) {
@@ -467,8 +472,8 @@ io.on('connection', async function(socket) {
         }
     })
 
-    socket.on('disconnect', socket => {
-        console.log("User disconnected")
+    socket.on('disconnect', () => {
+        console.log("User disconnected: " + socket.id)
         removeProducerWhenDisconectedFromSocket(socket.id)
 
     })
@@ -700,6 +705,7 @@ function roomMonitor(id) {
                 if (rooms[i].producers.length <= 0 && Date.now() > rooms[i].life_time) {
                     await removeRoom(id)
                         // remove producer by room id
+                        // removepro
                     clearInterval(monitor)
                 } else {
                     socket_updateInfoRoom(i);
@@ -1002,28 +1008,27 @@ async function removeProducerFromRoom(producer_id, room_id) {
 
 async function removeProducerBySocketId(socket_id) {
     try {
-
         let i = await producerIndexBySocketId(socket_id)
         if (i >= 0) {
             console.log("remove producer when disconected")
             let room_index = await roomIndex(producers[i].room_id)
             await removeProducerByIndex(i)
             await socket_updateInfoRoom(room_index)
+        } else {
+            console.log("ASdasdsa")
         }
-
-
-
     } catch (e) {
         console.log(e)
+        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
     }
 }
 
 
 // will remove producer after 10 seconds of disconected
 async function removeProducerWhenDisconectedFromSocket(socket_id) {
-    setTimeout(() => {
-        removeProducerBySocketId(socket_id)
-    }, 10000);
+    setTimeout(async() => {
+        await removeProducerBySocketId(socket_id)
+    }, 5000); // 5 second after disconected will remove producer by socket id
 }
 
 

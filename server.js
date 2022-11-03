@@ -116,11 +116,27 @@ app.get("/check", async(req, res) => {
 
 
 /**
- * new update
- *  add owner_producer_id to consumers
- * 
- *  
- *  
+ * on proggress
+ *  [1]. when user connect as producer then socket will send its producer id 
+ *       to all producer  in the room to add as new consumer for them
+ *       socket event: "producer-join-room"
+ *       row data:
+ *       {
+ *         "producer_id": xxx,
+ *         "room_id": xxx
+ *        }
+ *       - step:
+ *         looping from producers in rooms. to get socket_id
+ *  [2]. when user diconnect, than will socket will send its producer id 
+ *       to delete from others producers in the room
+ *       socket event: "producer-leave-room".
+ *       row data:
+ *       {
+ *         "producer_id": xxx,
+ *         "room_id": xxx
+ *        }
+ *       - step:
+ *         looping from producers in rooms. to get socket_id
  */
 
 /**
@@ -376,11 +392,18 @@ app.post("/join-room",
                     sdp: newsdp,
                     room_id: rooms[room_index].id,
                     producer_id: producers[producer_index].id,
-                    producer_name: producers[producer_index].name
+                    producer_name: producers[producer_index].name,
+                    producers: rooms[room_index].producers
+
                 }
             }
 
-            socket_updateInfoRoom(room_index);
+            // socket_updateInfoRoom(room_index);
+            await producerJoinOrLeaveTheRoomNotify(
+                rooms[room_index].id,
+                producers[producer_index].id,
+                producers[producer_index].name,
+                "join")
         } catch (e) {
             statusCode = 200
             data = {
@@ -527,14 +550,27 @@ function socket_ConsumerCandidateToClient(socket_id, data) {
     io.to(socket_id).emit("consumer-candidate-from-server", data)
 }
 
-// /**
-//  * @param  socket_id socket id target send
-//  * @param {object} sdp sdp answer from server
-//  * @return void
-//  */
-// function socket_ProducerSdpFromServer(socket_id, sdp) {
-//     io.to(socket_id).emit("producer-sdp-from-server", sdp)
-// }
+
+/**
+ * 
+ * @param {String} socket_id socket id of producer target to send 
+ * @param {Map} data {room_id,producer_id }
+ *   
+ */
+
+function socket_ProducerJoinTheRoom(socket_id, data) {
+    io.to(socket_id).emit("producer-join-room", data)
+}
+
+/**
+ * 
+ * @param {String} socket_id socket id of producer target to send 
+ * @param {Map} data {room_id,producer_id }
+ *   
+ */
+function socket_ProducerLeaveTheRoom(socket_id, data) {
+    io.to(socket_id).emit("producer-leave-room", data)
+}
 
 // /**
 //  * @param  socket_id socket id target send
@@ -579,8 +615,12 @@ async function socket_updateInfoRoom(room_index) {
 async function endCall(room_id, producer_id) {
     let room_index = await roomIndex(room_id)
     if (room_index >= 0) {
+        let producer_index = await producerIndex(producer_id);
+        if (producer_index >= 0) {
+            await producerJoinOrLeaveTheRoomNotify(rooms[room_index].id, producer_id, producers[producer_index].name, "leave")
+        }
         await removeProducer(producer_id)
-        socket_updateInfoRoom(room_index)
+            // socket_updateInfoRoom(room_index)
 
     }
 }
@@ -611,7 +651,7 @@ async function sdpFromJsonString(sdpJson) {
  */
 async function sdpToJsonString(sdp) {
     console.log("sdp to json string")
-    console.log(sdp)
+        // console.log(sdp)
 
 
     var session = sdpTransform.parse(String(sdp.sdp))
@@ -890,7 +930,7 @@ async function producerOnIceCandidate(i) {
         producers[i].peer.onicecandidate = (e) => {
             if (!e || !e.candidate) return;
             try {
-                console.log("ice candidate send to: " + producers[i].socket_id)
+                // console.log("ice candidate send to: " + producers[i].socket_id)
 
                 var newCandidate = {
                     'candidate': String(e.candidate.candidate),
@@ -898,10 +938,10 @@ async function producerOnIceCandidate(i) {
                     'sdpMLineIndex': e.candidate.sdpMLineIndex,
                 }
                 var data = {
-                    "candidate": newCandidate,
-                    "producer_id": producers[i].id,
-                }
-                console.log(data);
+                        "candidate": newCandidate,
+                        "producer_id": producers[i].id,
+                    }
+                    // console.log(data);
                 socket_ProducerCandidateToClient(producers[i].socket_id, data)
             } catch (e) {
                 console.log(e);
@@ -915,6 +955,43 @@ async function producerOnIceCandidate(i) {
     }
 }
 
+
+/**
+ * 
+ * @param {int} producer_index current producer when join the room 
+ * @param {int} room_index room index
+ * @param {String} type type of notify- "join" or "leave" 
+ */
+async function producerJoinOrLeaveTheRoomNotify(room_id, producer_id, producer_name, type = "join") {
+    try {
+        console.log("starting notify " + type)
+        var data = {
+            "room_id": room_id,
+            "producer_id": producer_id,
+            "producer_name": producer_name,
+        }
+        console.log(data)
+        let room_index = await roomIndex(room_id);
+        var _producers = rooms[room_index].producers;
+        for (let p of _producers) {
+            if (p.id != producer_id) {
+                let index_target = await producerIndex(p.id)
+                if (index_target >= 0) {
+                    if (type == "join") {
+                        console.log("notify join")
+                        socket_ProducerJoinTheRoom(producers[index_target].socket_id, data)
+                    }
+                    if (type == "leave") {
+                        console.log("notify leave")
+                        socket_ProducerLeaveTheRoom(producers[index_target].socket_id, data)
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.log(e)
+    }
+}
 
 
 // -------------------------------------------------------------------------
@@ -1037,9 +1114,10 @@ async function removeProducerBySocketId(socket_id) {
         let i = await producerIndexBySocketId(socket_id)
         if (i >= 0) {
             console.log("remove producer when disconected")
-            let room_index = await roomIndex(producers[i].room_id)
-            await removeProducerByIndex(i)
-            await socket_updateInfoRoom(room_index)
+            endCall(producers[i].room_id, producers[i].id)
+                // let room_index = await roomIndex(producers[i].room_id)
+                // await removeProducerByIndex(i)
+                // await socket_updateInfoRoom(room_index)
         } else {
             console.log("ASdasdsa")
         }
@@ -1192,7 +1270,7 @@ async function consumerOnIceCandidate(consumer_index, producer_index) {
         consumers[consumer_index].peer.onicecandidate = (e) => {
             if (!e || !e.candidate) return;
             try {
-                console.log("ice candidate send to consumer: " + consumers[consumer_index].socket_id)
+                // console.log("ice candidate send to consumer: " + consumers[consumer_index].socket_id)
                 var newCandidate = {
                     'candidate': String(e.candidate.candidate),
                     'sdpMid': String(e.candidate.sdpMid),

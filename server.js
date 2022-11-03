@@ -39,20 +39,15 @@ const offerSdpConstraints = {
 
 // -----------------------------------------------------------------------------------------------
 app.use(cors())
-
-// support parsing of application/json type post data
-
 app.use(express.static('public'));
-
-
+// support parsing of application/json type post data
 app.use(bodyParser.json());
-
 //support parsing of application/x-www-form-urlencoded post data
 app.use(bodyParser.urlencoded({ extended: true }));
-
 server.listen(port, host, () => {
-    console.log("server running : " + host + ":" + port)
-})
+        console.log("server running : " + host + ":" + port)
+    })
+    // -----------------------------------------------------------------------------------------------
 
 
 
@@ -82,18 +77,47 @@ app.get("/remove", async(req, res) => {
     res.json({ "status": m })
 })
 app.get("/check", async(req, res) => {
-    (req, res)
 
-    setInterval(() => {
-        console.log("room length: " + rooms.length)
-    }, 1000);
-    res.json({ "status": "check" })
+    var _rooms = []
+    for (let r of rooms) {
+        _rooms.push({
+            "id": r.id,
+            "password": r.password,
+            "life_time": r.life_time,
+            "producers": r.producers,
+        })
+    }
+
+    var _consumers = []
+    for (var c of consumers) {
+        _consumers.push({
+            "id": c.id,
+            "producer_id": c.producer_id,
+            "socket_id": c.socket_id,
+        })
+    }
+    var _producers = []
+    for (var p of producers) {
+        _producers.push({
+            "id": p.id,
+            "name": p.name,
+            "socket_id": p.socket_id,
+        })
+    }
+
+
+    res.json({
+        "status": "list data",
+        "rooms": _rooms,
+        "producers": _producers,
+        "consumers": _consumers,
+    })
 })
 
 
 /**
  * new update
- * fixing bug when user disconnected, to remove producer after some time
+ *  add owner_producer_id to consumers
  * 
  *  
  *  
@@ -179,11 +203,13 @@ class Producer {
 class Consumer {
     constructor(
         id = null,
+        owner_producer_id = null,
         producer_id = null,
         socket_id = null,
         peer = new webrtc.RTCPeerConnection(),
     ) {
         this.id = id
+        this.owner_producer_id = owner_producer_id
         this.producer_id = producer_id
         this.socket_id = socket_id
         this.peer = peer
@@ -191,7 +217,7 @@ class Consumer {
 }
 
 
-
+// this class using for object to store producer to rooms
 class ProducerRoom {
     constructor(id, name) {
         this.id = id
@@ -393,7 +419,7 @@ app.post("/consumer",
             if (producer_index < 0) {
                 throw "failed create consumer- no producer"
             }
-            var consumer_index = await createConsumer(socket.id, producer_index, body.sdp, use_sdp_transform)
+            var consumer_index = await createConsumer(socket.id, body.owner_producer_id, producer_index, body.sdp, use_sdp_transform)
             if (consumer_index < 0) {
                 throw "failed create consumer- no consumer"
             }
@@ -708,7 +734,7 @@ function roomMonitor(id) {
                         // removepro
                     clearInterval(monitor)
                 } else {
-                    socket_updateInfoRoom(i);
+                    // socket_updateInfoRoom(i);
                 }
             } else {
                 clearInterval(monitor)
@@ -1046,11 +1072,12 @@ async function removeProducerWhenDisconectedFromSocket(socket_id) {
  * @param  sdp sdp answer from client
  * @return  consumer index
  */
-async function createConsumer(socket_id, producer_index, sdp, use_sdp_transform = false) {
+async function createConsumer(socket_id, owner_producer_id, producer_index, sdp, use_sdp_transform = false) {
     var id = uuidv4()
 
     var consumer = new Consumer(
         id,
+        owner_producer_id,
         producers[producer_index].id,
         socket_id,
         new webrtc.RTCPeerConnection(configurationPeerConnection, offerSdpConstraints))
@@ -1234,7 +1261,7 @@ async function removeConsumer(id) {
 async function removeConsumerByProducerId(id) {
     try {
         for (var x = 0; x < consumers.length; x++) {
-            if (consumers[x].producer_id === id) {
+            if (consumers[x].producer_id === id || consumers[x].owner_producer_id === id) {
                 consumers[x].peer.close();
                 consumers[x].peer = null
                 consumers.splice(x, 1);

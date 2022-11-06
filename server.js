@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------------------------------
-const host = "192.168.1.8"
+const host = "192.168.1.5"
 const port = 5000
 
 // -----------------------------------------------------------------------------------------------
@@ -317,6 +317,7 @@ app.post("/check-room", async function({ body }, res) {
                 data = {
                     "message": "room not found"
                 }
+
             } else {
                 if (rooms[room_index].password != null && rooms[room_index].password != body.password) {
                     statusCode = 403
@@ -325,6 +326,7 @@ app.post("/check-room", async function({ body }, res) {
                     }
                 }
             }
+            console.log(data)
         } catch (e) {
             statusCode = 404
             console.log(e)
@@ -361,7 +363,10 @@ app.post("/join-room",
             if (body.use_sdp_transform === true || body.use_sdp_transform == undefined) {
                 use_sdp_transform = true
             }
-
+            // var already_join = body.already_join;
+            // if (already_join == undefined) {
+            //     already_join = true
+            // }
 
             var socket = await io.sockets.sockets.get(body.socket_id)
             var producer_index = await createProducer(socket.id, body.producer_id, body.producer_name, body.sdp, body.room_id, use_sdp_transform)
@@ -375,8 +380,10 @@ app.post("/join-room",
             }
 
             // add producer to room
+
             await addProducerToRoom(room_index, producer_index)
-                // --------------------------------- send back sdp to client
+
+            // --------------------------------- send back sdp to client
             console.log("sdp local")
             var sdp = await producers[producer_index].peer.localDescription
             var newsdp
@@ -702,22 +709,6 @@ async function addProducerToRoom(room_index, producer_index) {
     }
 }
 
-// /**
-//  * @param  id room id
-//  * @return {object} room object
-//  */
-// async function getRoom(id) {
-//     try {
-//         let i = await roomIndex(id)
-//         if (i >= 0) {
-//             return rooms[i]
-//         }
-//     } catch (e) {
-//         console.log(e);
-//         console.log("\x1b[31m", "ERROR................", "\x1b[0m");
-//     }
-//     return null
-// }
 
 // testting performance
 // http://jsben.ch/zikym
@@ -804,9 +795,14 @@ async function createProducer(socket_id, id, name, sdp, room_id, use_sdp_transfo
         name = "user-" + String(Date.now())
     }
 
+    var usingOldIndex = false;
     let producerExistIndex = await producerIndex(id);
     if (producerExistIndex >= 0) {
-        await removeProducerByIndex(producerExistIndex);
+        if (producers[producerExistIndex].room_id == room_id) {
+            usingOldIndex = true;
+        } else {
+            await removeProducerByIndex(producerExistIndex);
+        }
     }
 
     var producer = new Producer(
@@ -817,7 +813,11 @@ async function createProducer(socket_id, id, name, sdp, room_id, use_sdp_transfo
         new MediaStream(),
         room_id
     );
-    await producers.push(producer)
+    if (usingOldIndex) {
+        producers[producerExistIndex] = producer
+    } else {
+        producers.push(producer)
+    }
 
     var producer_index = await producerIndex(id)
     if (producer_index >= 0) {

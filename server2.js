@@ -446,7 +446,7 @@ app.post("/join-room",
                 }
             }
 
-            await producerSendNotify(
+            await sendNotify(
                 room_id,
                 producer_id,
                 "join")
@@ -472,21 +472,18 @@ app.post("/consumer",
     async function({ body }, res) {
         try {
             console.log("create consumer")
-            console.log(body.socket_id)
-            console.log(body.sdp)
-            console.log(body.producer_id)
-            console.log(body.use_sdp_transform);
+                // console.log(body.socket_id)
+                // console.log(body.sdp)
+                // console.log(body.producer_id)
+                // console.log(body.use_sdp_transform);
             var use_sdp_transform = false;
             if (body.use_sdp_transform === true || body.use_sdp_transform == undefined) {
                 use_sdp_transform = true
             }
-
             // socket
             var socket = await io.sockets.sockets.get(body.socket_id)
             console.log("socket from server: " + socket.id)
-
-            // create consumer
-
+                // create consumer
             var id = await createConsumer(socket.id, body.owner_producer_id, body.producer_id, body.sdp, use_sdp_transform)
             if (id == null) {
                 throw "failed create consumer- no consumer"
@@ -550,8 +547,14 @@ io.on('connection', async function(socket) {
      * @param {Map} data {producer_id, socket_id}
      */
     socket.on("update-data", function(data) {
-        // producerUpdateSocket(data["producer_id"], data["socket_id"]);
         updateProducer(data);
+    });
+    // ---------------------------------------------------------
+    /**
+     * @param {Map} data {producer_id, room_id, message}
+     */
+    socket.on("send-message", function(data) {
+        sendNotify(data["room_id"], data["producer_id"], "message", data["message"])
     });
 
     /**
@@ -603,6 +606,17 @@ function socket_ConsumerCandidateToClient(socket_id, data) {
  *   
  */
 
+function socket_ProducerSendMessage(socket_id, data) {
+    console.log("notify update")
+    io.to(socket_id).emit("producer-send-message", data)
+}
+/**
+ * 
+ * @param {String} socket_id socket id of producer target to send 
+ * @param {Map} data {room_id,producer_id }
+ *   
+ */
+
 function socket_ProducerUpdateData(socket_id, data) {
     console.log("notify update")
     io.to(socket_id).emit("producer-update-data", data)
@@ -630,14 +644,7 @@ function socket_ProducerLeaveTheRoom(socket_id, data) {
     io.to(socket_id).emit("producer-leave-room", data)
 }
 
-// /**
-//  * @param  socket_id socket id target send
-//  * @param  room_id room id already created
-//  * @return void - send back room id to client when client create call
-//  */
-// function socket_RoomCreatedOnServer(socket_id, room_id) {
-//     io.to(socket_id).emit("room-created-server", room_id)
-// }
+
 
 /**
  * @param  id room id for search producer_id
@@ -672,7 +679,7 @@ async function socket_updateInfoRoom(id) {
 async function endCall(room_id, producer_id) {
 
     if (rooms[room_id] != null && producers[producer_id] != null) {
-        await producerSendNotify(room_id, producer_id, "leave")
+        await sendNotify(room_id, producer_id, "leave")
         await removeProducer(producer_id)
     }
 }
@@ -1013,24 +1020,26 @@ async function producerOnIceCandidate(id) {
 
 /**
  * 
- * @param {int} producer_index current producer when join the room 
- * @param {int} room_index room index
- * @param {String} type type of notify- "join" or "leave" or "update"
+ * @param {int}  producer_id producer id 
+ * @param {int} room_id room id
+ * @param {String} type type of notify- "join" | "leave" | "update" | message
+ * @param {String} message message
  */
-async function producerSendNotify(room_id, producer_id, type) {
+async function sendNotify(room_id, producer_id, type, message = '') {
     try {
         console.log("starting notify " + type)
         var data = {
             "room_id": room_id,
-            "producer_id": producer_id,
-            "producer_name": producers[producer_id].name,
-            "producer_has_video": producers[producer_id].has_video,
-            "producer_has_audio": producers[producer_id].has_audio,
-
+            "producer": {
+                "id": producer_id,
+                "name": producers[producer_id].name,
+                "has_video": producers[producer_id].has_video,
+                "has_audio": producers[producer_id].has_audio,
+            },
+            "message": message
         }
         console.log(data)
         for (let p in rooms[room_id].producers) {
-
             if (p != producer_id && producers[p] != null) {
                 if (type == "join") {
                     console.log("notify join")
@@ -1044,7 +1053,10 @@ async function producerSendNotify(room_id, producer_id, type) {
                     console.log("notify update")
                     socket_ProducerUpdateData(producers[p].socket_id, data)
                 }
-
+                if (type == "message") {
+                    console.log("notify message")
+                    socket_ProducerSendMessage(producers[p].socket_id, data)
+                }
             }
         }
     } catch (e) {
@@ -1088,7 +1100,7 @@ async function updateProducer(data) {
                 rooms[room.id].producers[producer.id].has_video = data["producer"]["has_video"]
                 rooms[room.id].producers[producer.id].has_audio = data["producer"]["has_audio"]
             }
-            producerSendNotify(room.id, producer.id, "update");
+            sendNotify(room.id, producer.id, "update");
         }
 
     } catch (e) {
@@ -1096,26 +1108,7 @@ async function updateProducer(data) {
         console.log("\x1b[31m", "ERROR................", "\x1b[0m");
     }
 }
-// /**
-//  * @param  id producer id
-//  * @return producer index
-//  */
-// async function producerUpdateSocket(id, socket_id) {
-//     try {
-//         console.log("update socket")
-//         let socket = await io.sockets.sockets.get(socket_id)
-//         if (socket != null || socket != undefined) {
-//             if (producers[id] != null) {
-//                 console.log("producer sockets updated")
-//                 producers[id].socket_id = socket.id;
-//             }
-//         }
 
-//     } catch (e) {
-//         console.log(e);
-//         console.log("\x1b[31m", "ERROR................", "\x1b[0m");
-//     }
-// }
 
 
 /**

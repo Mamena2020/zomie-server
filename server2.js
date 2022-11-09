@@ -606,6 +606,17 @@ function socket_ConsumerCandidateToClient(socket_id, data) {
  *   
  */
 
+function socket_ProducerEventNotify(socket_id, data) {
+    console.log("notify " + data["type"])
+    io.to(socket_id).emit("producer-event", data)
+}
+/**
+ * 
+ * @param {String} socket_id socket id of producer target to send 
+ * @param {Map} data {room_id,producer_id }
+ *   
+ */
+
 function socket_ProducerSendMessage(socket_id, data) {
     console.log("notify update")
     io.to(socket_id).emit("producer-send-message", data)
@@ -1022,10 +1033,10 @@ async function producerOnIceCandidate(id) {
  * 
  * @param {int}  producer_id producer id 
  * @param {int} room_id room id
- * @param {String} type type of notify- "join" | "leave" | "update" | message
+ * @param {String} type type of notify: "join" | "leave" | "update" | "message" | "start_screen" | "stop_screen"
  * @param {String} message message
  */
-async function sendNotify(room_id, producer_id, type, message = '') {
+async function sendNotify(room_id, producer_id, type, message = '', ignore_send) {
     try {
         console.log("starting notify " + type)
         var data = {
@@ -1036,27 +1047,29 @@ async function sendNotify(room_id, producer_id, type, message = '') {
                 "has_video": producers[producer_id].has_video,
                 "has_audio": producers[producer_id].has_audio,
             },
+            "type": type,
             "message": message
         }
         console.log(data)
         for (let p in rooms[room_id].producers) {
             if (p != producer_id && producers[p] != null) {
-                if (type == "join") {
-                    console.log("notify join")
-                    socket_ProducerJoinTheRoom(producers[p].socket_id, data)
-                }
-                if (type == "leave") {
-                    console.log("notify leave")
-                    socket_ProducerLeaveTheRoom(producers[p].socket_id, data)
-                }
-                if (type == "update") {
-                    console.log("notify update")
-                    socket_ProducerUpdateData(producers[p].socket_id, data)
-                }
-                if (type == "message") {
-                    console.log("notify message")
-                    socket_ProducerSendMessage(producers[p].socket_id, data)
-                }
+                socket_ProducerEventNotify(producers[p].socket_id, data)
+                    // if (type == "join") {
+                    //     console.log("notify join")
+                    //     socket_ProducerJoinTheRoom(producers[p].socket_id, data)
+                    // }
+                    // if (type == "leave") {
+                    //     console.log("notify leave")
+                    //     socket_ProducerLeaveTheRoom(producers[p].socket_id, data)
+                    // }
+                    // if (type == "update") {
+                    //     console.log("notify update")
+                    //     socket_ProducerUpdateData(producers[p].socket_id, data)
+                    // }
+                    // if (type == "message") {
+                    //     console.log("notify message")
+                    //     socket_ProducerSendMessage(producers[p].socket_id, data)
+                    // }
             }
         }
     } catch (e) {

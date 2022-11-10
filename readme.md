@@ -12,11 +12,13 @@ socket info
   - flutter:  
 
 
-#cors allow
+#cors allow 
   - issues
     - https://stackoverflow.com/questions/43150051/how-to-enable-cors-nodejs-with-express  
 
 #web RTC
+  - Articles
+    - https://bloggeek.me/webrtc-rtcpeerconnection-one-per-stream/
   - Videos - Topologies
     - https://www.youtube.com/watch?v=N1yj6gI2CTE&ab_channel=EngineeringSemester
     - https://www.youtube.com/watch?v=d2N0d6CKrbk&ab_channel=TsahiLevent-Levi

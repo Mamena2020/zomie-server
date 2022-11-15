@@ -13,7 +13,7 @@
  *    rooms.length
  */
 // -----------------------------------------------------------------------------------------------
-const host = "192.168.1.5"
+const host = "192.168.1.10"
 const port = 5000
 
 // -----------------------------------------------------------------------------------------------
@@ -26,12 +26,13 @@ const cors = require('cors');
 const webrtc = require("wrtc")
 const { MediaStream } = require('wrtc')
 const bodyParser = require('body-parser')
-const { v4: uuidv4 } = require('uuid')
+const { v4: uuidv4, v1: uuidv1 } = require('uuid')
 const sdpTransform = require('sdp-transform');
 
 // -----------------------------------------------------------------------------------------------
 
 const configurationPeerConnection = {
+    sdpSemantics: "unified-plan",
     iceServers: [{
             "urls": "stun:stun.stunprotocol.org"
         },
@@ -61,55 +62,6 @@ server.listen(port, host, () => {
 
 // -----------------------------------------------------------------------------------------------
 
-
-
-
-
-const _data = {};
-
-app.get("/test-add", async(req, res) => {
-
-    var uuid = uuidv4();
-
-    _data[uuid] = {
-        date: "Date  - " + Date.now(),
-        children: {}
-    }
-
-    res.json({ "data": _data })
-})
-app.get("/test-add2", async(req, res) => {
-    if (_data[req.query.id] != null) {
-        console.log("ada exist to add")
-        var uuid = uuidv4();
-        _data[req.query.id].children[uuid] = " child - " + Date.now()
-    }
-    res.json({ "data": _data })
-})
-app.get("/test-delete", async(req, res) => {
-
-    console.log(req.query)
-
-    delete _data[req.query.id];
-
-    res.json({ "data": _data, "body": req.query.id })
-})
-app.get("/test-show", async(req, res) => {
-
-
-    let _message = 'found'
-    if (_data[req.query.id] == null) {
-        _message = 'no found'
-    }
-
-    res.json({
-        "data": _data,
-        "show": _data[req.query.id],
-        "length": Object.keys(_data).length,
-        "message": _message
-    })
-})
-
 app.get("/check", async(req, res) => {
 
     var _rooms = []
@@ -122,14 +74,7 @@ app.get("/check", async(req, res) => {
         })
     }
 
-    var _consumers = []
-    for (var c in consumers) {
-        _consumers.push({
-            "id": consumers[c].id,
-            "producer_id": consumers[c].producer_id,
-            "socket_id": consumers[c].socket_id,
-        })
-    }
+
     var _producers = []
     for (var p in producers) {
         _producers.push({
@@ -144,7 +89,7 @@ app.get("/check", async(req, res) => {
         "status": "list data",
         "rooms": _rooms,
         "producers": _producers,
-        "consumers": _consumers,
+        // "consumers": _consumers,
     })
 })
 
@@ -225,7 +170,6 @@ app.get("/check", async(req, res) => {
 
 //-------------------------------------------------------------------------
 const producers = {}
-const consumers = {}
 const rooms = {}
 const timeIntervalMonitoringRoomInSec = 1000 * 60
 
@@ -241,6 +185,7 @@ class Producer {
         has_video = true,
         has_audio = true,
         peer = new webrtc.RTCPeerConnection(),
+        peerConsumer = null,
         stream = new MediaStream(),
     ) {
         this.socket_id = socket_id
@@ -250,35 +195,10 @@ class Producer {
         this.has_video = has_video
         this.has_audio = has_audio
         this.peer = peer
+        this.peerConsumer = peerConsumer
         this.stream = stream
     }
 }
-
-class Consumer {
-    constructor(
-        id = null,
-        owner_producer_id = null,
-        producer_id = null,
-        socket_id = null,
-        peer = new webrtc.RTCPeerConnection(),
-    ) {
-        this.id = id
-        this.owner_producer_id = owner_producer_id
-        this.producer_id = producer_id
-        this.socket_id = socket_id
-        this.peer = peer
-    }
-}
-
-
-// this class using for object to store producer to rooms
-// class ProducerRoom {
-//     constructor(id, name) {
-//         this.id = id
-//         this.name = name
-//     }
-// }
-
 
 class Room {
     constructor(id = null, password = null, life_time, producers = {}, monitor = function() {}) {
@@ -386,9 +306,6 @@ app.post("/join-room",
             console.log("has audio: " + body.has_audio)
             console.log("room id: " + body.room_id)
 
-            // console.log(body.socket_id)
-            // console.log(body.sdp)
-            // console.log(body.use_sdp_transform);
 
             if (rooms[body.room_id] == null) {
                 statusCode = 404;
@@ -476,35 +393,38 @@ app.post("/consumer",
                 // console.log(body.sdp)
                 // console.log(body.producer_id)
                 // console.log(body.use_sdp_transform);
-            var use_sdp_transform = false;
-            if (body.use_sdp_transform === true || body.use_sdp_transform == undefined) {
-                use_sdp_transform = true
-            }
-            // socket
-            var socket = await io.sockets.sockets.get(body.socket_id)
-            console.log("socket from server: " + socket.id)
-                // create consumer
-            var id = await createConsumer(socket.id, body.owner_producer_id, body.producer_id, body.sdp, use_sdp_transform)
-            if (id == null) {
-                throw "failed create consumer- no consumer"
-            }
-            // --------------------------------- send back sdp to client
-            var sdp = await consumers[id].peer.localDescription
-            console.log("sdp local")
-                // console.log(sdp)
-            var newsdp
-            if (use_sdp_transform) {
-                newsdp = await sdpToJsonString(sdp)
-            } else {
-                newsdp = sdp;
-            }
-            console.log(newsdp)
-            var data = {
-                sdp: newsdp,
-                consumer_id: id
-            }
-            res.status(200)
-            res.json(data)
+            res.status(201)
+            res.json({})
+
+
+            // var use_sdp_transform = false;
+            // if (body.use_sdp_transform === true || body.use_sdp_transform == undefined) {
+            //     use_sdp_transform = true
+            // }
+            // // socket
+            // var socket = await io.sockets.sockets.get(body.socket_id)
+            // console.log("socket from server: " + socket.id)
+            //     // create consumer
+            // var id = await createConsumer(socket.id, body.owner_producer_id, body.producer_id, body.sdp, use_sdp_transform)
+            // if (id == null) {
+            //     throw "failed create consumer- no consumer"
+            // }
+            // // --------------------------------- send back sdp to client
+            // var sdp = await consumers[id].peer.localDescription
+            // console.log("sdp local")
+            //     // console.log(sdp)
+            // var newsdp
+            // if (use_sdp_transform) {
+            //     newsdp = await sdpToJsonString(sdp)
+            // } else {
+            //     newsdp = sdp;
+            // }
+            // var data = {
+            //     sdp: newsdp,
+            //     consumer_id: id
+            // }
+            // res.status(200)
+            // res.json(data)
         } catch (e) {
             console.log(e);
             console.log("\x1b[31m", "ERROR................", "\x1b[0m");
@@ -512,28 +432,6 @@ app.post("/consumer",
         res.status(409)
     })
 
-// --------------------------------------------------------------------------------------------------------
-app.get("/producers", async(req, res) => {
-
-        var data = [];
-        for (var p of producers) {
-            data.push(p.id)
-        }
-        console.log(data);
-        res.status(200)
-        res.json({
-            "producer_ids": data
-        })
-    })
-    // --------------------------------------------------------------------------------------------------------
-    // -------------------------------------------------------------------------------------------------
-app.get("/producer-ids", (req, res) => {
-    var data = [];
-    for (i in producers) {
-        data.push(producers[i].id)
-    }
-    res.json(data);
-})
 
 
 // ================================================================================================ 
@@ -544,10 +442,45 @@ io.on('connection', async function(socket) {
     console.log("new connection: " + socket.id);
     // ---------------------------------------------------------
     /**
+     * @param {Map} data {producer_id, candidate{}}
+     */
+    socket.on("producer-candidate-from-client", function(data) {
+        producerAddCandidate(data['producer_id'], data['candidate']);
+    });
+    // ---------------------------------------------------------
+    /**
+     * @param {String} room_id 
+     * @param {String} current_producer_id
+     * @param {String} sdp
+     * 
+     */
+
+    // ---------------------------------------------------------
+    /**
      * @param {Map} data {producer_id, socket_id}
      */
     socket.on("update-data", function(data) {
         updateProducer(data);
+    });
+
+    // 1
+    /**
+     * @param {Map} data {
+     * producer_id
+     * }
+     */
+    socket.on("consumer-update", function(data) {
+        consumerUpdate(data["producer_id"])
+    });
+    // 2
+    /**
+     * @param {Map} data{
+     * producer_id,
+     * sdp -> answer
+     * }
+     */
+    socket.on("consumer-sdp", function(data) {
+        processSdpConsumer(data['producer_id'], data["sdp"]);
     });
     // ---------------------------------------------------------
     /**
@@ -572,14 +505,21 @@ io.on('connection', async function(socket) {
     socket.on('disconnect', () => {
         console.log("User disconnected: " + socket.id)
         removeProducerWhenDisconectedFromSocket(socket.id)
-
     })
 })
-
 
 // ================================================================================================ 
 // ================================================================================================ socket functions
 // ================================================================================================ 
+
+/**
+ * @param  socket_id socket id target send
+ * @param {Map} data {
+ *  producer_id, room_id, sdp answer
+ * }
+ * @return void
+ */
+
 
 /**
  * @param  socket_id socket id target send
@@ -610,81 +550,7 @@ function socket_ProducerEventNotify(socket_id, data) {
     console.log("notify " + data["type"])
     io.to(socket_id).emit("producer-event", data)
 }
-/**
- * 
- * @param {String} socket_id socket id of producer target to send 
- * @param {Map} data {room_id,producer_id }
- *   
- */
 
-function socket_ProducerSendMessage(socket_id, data) {
-    console.log("notify update")
-    io.to(socket_id).emit("producer-send-message", data)
-}
-/**
- * 
- * @param {String} socket_id socket id of producer target to send 
- * @param {Map} data {room_id,producer_id }
- *   
- */
-
-function socket_ProducerUpdateData(socket_id, data) {
-    console.log("notify update")
-    io.to(socket_id).emit("producer-update-data", data)
-}
-/**
- * 
- * @param {String} socket_id socket id of producer target to send 
- * @param {Map} data {room_id,producer_id }
- *   
- */
-
-function socket_ProducerJoinTheRoom(socket_id, data) {
-    console.log("notify join")
-    io.to(socket_id).emit("producer-join-room", data)
-}
-
-/**
- * 
- * @param {String} socket_id socket id of producer target to send 
- * @param {Map} data {room_id,producer_id }
- *   
- */
-function socket_ProducerLeaveTheRoom(socket_id, data) {
-    console.log("notify leave")
-    io.to(socket_id).emit("producer-leave-room", data)
-}
-
-
-
-/**
- * @param  id room id for search producer_id
- * @return void - send list of producer ids & room_id to all producer in a room,
- */
-async function socket_updateInfoRoom(id) {
-    try {
-        console.log("socket update from ROOM :" + id);
-        for (var p in rooms[id].producers) {
-            try {
-
-                if (producers[p.id] != null) {
-                    console.log("\x1b[35m", "SEND UPDATE TO" + producers[p.id].name, "\x1b[0m");
-                    let data = {
-                        "room_id": id,
-                        "producers": rooms[id].producers
-                    }
-                    io.to(producers[p.id].socket_id).emit("room-update-from-server", data)
-                }
-            } catch (e) {
-                console.log(e);
-                console.log("\x1b[31m", "ERROR................", "\x1b[0m");
-            }
-        }
-    } catch (e2) {
-        console.log(e2);
-        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
-    }
-}
 
 
 async function endCall(room_id, producer_id) {
@@ -744,7 +610,7 @@ async function sdpToJsonString(sdp) {
 async function createRoom(
     password, life_time
 ) {
-    var id = uuidv4()
+    var id = uuidv4().substring(0, 8)
     var room = new Room(
         id,
         password,
@@ -781,12 +647,21 @@ async function addProducerToRoom(room_id, producer_id) {
     return id
 }
 
-function getProducersFromRoomToArray(room_id) {
+function getProducersFromRoomToArray(room_id, producer_id_except = null) {
     var _producers = [];
     try {
         if (rooms[room_id] != null) {
             for (let p in rooms[room_id].producers) {
-                _producers.push(rooms[room_id].producers[p]);
+                // _producers.push(rooms[room_id].producers[p]);
+                if (producers[p] != null && p != producer_id_except) {
+                    _producers.push({
+                        "id": producers[p].id,
+                        "name": producers[p].name,
+                        "has_video": producers[p].has_video,
+                        "has_audio": producers[p].has_audio,
+                        "stream_id": producers[p].stream.id
+                    });
+                }
             }
         }
     } catch (e) {
@@ -798,24 +673,7 @@ function getProducersFromRoomToArray(room_id) {
 }
 
 
-// testting performance
-// http://jsben.ch/zikym
-/**
- * @param  id room id
- * @return room index
- */
-async function roomIndex(id) {
 
-    // return await rooms.findIndex((e) => e.id == id) // slower methods
-    var index = -1;
-    for (let i = 0; i < rooms.length; i++) {
-        if (rooms[i].id == id) {
-            index = i;
-            break;
-        }
-    }
-    return index;
-}
 
 /**
  * @param  id room id
@@ -870,14 +728,6 @@ function roomMonitor(id) {
  * @return  producer index
  */
 async function createProducer(
-    // socket.id,
-    // body.room_id,
-    // body.producer_id,
-    // body.producer_name,
-    // body.has_video,
-    // body.has_audio,
-    // body.sdp,
-    // use_sdp_transform
     socket_id,
     room_id,
     producer_id,
@@ -893,14 +743,11 @@ async function createProducer(
     if (producer_name == undefined || producer_name == null) {
         producer_name = "user-" + String(Date.now())
     }
-
     if (producers[producer_id] != null) {
         if (producers[producer_id].room_id != room_id) {
-            // remove producer here xxx
             console.log("exist before")
         }
     }
-
     var producer = new Producer(
         socket_id,
         room_id,
@@ -909,10 +756,17 @@ async function createProducer(
         has_video,
         has_audio,
         new webrtc.RTCPeerConnection(configurationPeerConnection, offerSdpConstraints),
+        new webrtc.RTCPeerConnection(configurationPeerConnection, offerSdpConstraints),
         new MediaStream(),
     )
 
     producers[producer_id] = producer
+    producers[producer_id].peer.addTransceiver("video", { direction: "sendrecv" })
+    producers[producer_id].peer.addTransceiver("audio", { direction: "sendrecv" })
+    producers[producer_id].peer.onnegotiationneeded = (e) => {
+        console.log("\x1b[34m", "producers: onnegotiationneeded " + producers[producer_id].name, "\x1b[0m")
+    }
+
     producerOnMediaStream(producer_id)
         // --------------------------------- process offer answer sdp
     await producerWebRTCProcess(producer_id, sdp, use_sdp_transform)
@@ -958,7 +812,8 @@ async function producerWebRTCProcess(id, sdp, use_sdp_transform) {
         }
         const desc = new webrtc.RTCSessionDescription(newsdp);
         await producers[id].peer.setRemoteDescription(desc);
-        const answer = await producers[id].peer.createAnswer({ 'offerToReceiveVideo': 1 });
+        // const answer = await producers[id].peer.createAnswer({ 'offerToReceiveVideo': 1 });
+        const answer = await producers[id].peer.createAnswer();
         await producers[id].peer.setLocalDescription(answer);
     } catch (e) {
         console.log(e);
@@ -1030,13 +885,38 @@ async function producerOnIceCandidate(id) {
 
 
 /**
+ * add candidate from client to server 
+ * @param {String} producer_id 
+ * @param {Map} candidate : {candidate, sdpMid, sdpMLineIndex }
+ */
+async function producerAddCandidate(producer_id, candidate) {
+
+    try {
+        console.log(producer_id)
+        if (producers[producer_id] != null) {
+            console.log("add candidate in server")
+            producers[producer_id].peer.addIceCandidate(new webrtc.RTCIceCandidate(candidate))
+        } else {
+            console.log("producer not found when add candidate")
+        }
+    } catch (e) {
+        console.log(e)
+        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
+    }
+}
+
+
+
+
+
+/**
  * 
  * @param {int}  producer_id producer id 
  * @param {int} room_id room id
  * @param {String} type type of notify: "join" | "leave" | "update" | "message" | "start_screen" | "stop_screen"
  * @param {String} message message
  */
-async function sendNotify(room_id, producer_id, type, message = '', ignore_send) {
+async function sendNotify(room_id, producer_id, type, message = '', ) {
     try {
         console.log("starting notify " + type)
         var data = {
@@ -1044,32 +924,27 @@ async function sendNotify(room_id, producer_id, type, message = '', ignore_send)
             "producer": {
                 "id": producer_id,
                 "name": producers[producer_id].name,
+                "stream_id": producers[producer_id].stream.id,
                 "has_video": producers[producer_id].has_video,
                 "has_audio": producers[producer_id].has_audio,
             },
+            "producers": type == "join" ?
+                getProducersFromRoomToArray(room_id) : type == "leave" ? getProducersFromRoomToArray(room_id, producer_id) : [],
             "type": type,
             "message": message
         }
         console.log(data)
         for (let p in rooms[room_id].producers) {
-            if (p != producer_id && producers[p] != null) {
-                socket_ProducerEventNotify(producers[p].socket_id, data)
-                    // if (type == "join") {
-                    //     console.log("notify join")
-                    //     socket_ProducerJoinTheRoom(producers[p].socket_id, data)
-                    // }
-                    // if (type == "leave") {
-                    //     console.log("notify leave")
-                    //     socket_ProducerLeaveTheRoom(producers[p].socket_id, data)
-                    // }
-                    // if (type == "update") {
-                    //     console.log("notify update")
-                    //     socket_ProducerUpdateData(producers[p].socket_id, data)
-                    // }
-                    // if (type == "message") {
-                    //     console.log("notify message")
-                    //     socket_ProducerSendMessage(producers[p].socket_id, data)
-                    // }
+            // if (p != producer_id && producers[p] != null) {
+            if (producers[p] != null) {
+                if (type == "join" || type == "leave") {
+                    socket_ProducerEventNotify(producers[p].socket_id, data)
+                } else {
+                    if (p != producer_id) {
+
+                        socket_ProducerEventNotify(producers[p].socket_id, data)
+                    }
+                }
             }
         }
     } catch (e) {
@@ -1123,22 +998,6 @@ async function updateProducer(data) {
 }
 
 
-
-/**
- * @param  id producer id
- * @return producer index
- */
-async function producerIndex(id) {
-    // return producers.findIndex((e) => e.id == id)
-    var index = -1;
-    for (let i = 0; i < producers.length; i++) {
-        if (producers[i].id == id) {
-            index = i;
-            break;
-        }
-    }
-    return index;
-}
 /**
  * @param  socket_id producer socket id
  * @return producer id
@@ -1161,9 +1020,11 @@ async function removeProducer(id) {
         if (producers[id] != null) {
             console.log("remove producer")
             await removeProducerFromRoom(id, producers[id].room_id)
-            await removeConsumerByProducerId(id)
+                // await removeConsumerByProducerId(id)
             producers[id].peer.close()
             producers[id].peer = null
+            producers[id].peerConsumer.close()
+            producers[id].peerConsumer = null
             delete producers[id];
         }
     } catch (e) {
@@ -1214,121 +1075,91 @@ async function removeProducerWhenDisconectedFromSocket(socket_id) {
 
 
 
-
-
-
 // ================================================================================================ 
 // ================================================================================================ consumer functions
 // ================================================================================================ 
 
 
-/**
- * @param  socket_id socket client connected
- * @param  sdp sdp answer from client
- * @return  consumer index
- */
-async function createConsumer(socket_id, owner_producer_id, producer_id, sdp, use_sdp_transform = false) {
 
+
+/**
+ * flow->
+ * after user join room, then will notif to all user via socket.
+ * each client will access this updateConsumer to create consumer for then to stream media
+ */
+async function consumerUpdate(producer_id) {
     if (producers[producer_id] == null)
-        return null;
-
-    var id = uuidv4()
-    var consumer = new Consumer(
-        id,
-        owner_producer_id,
-        producer_id,
-        socket_id,
-        new webrtc.RTCPeerConnection(configurationPeerConnection, offerSdpConstraints))
-    consumers[id] = consumer
-
-    await consumerWebRTCProcess(id, sdp, producer_id, use_sdp_transform);
-    consumerWebRTCCallback(id, producer_id);
-
-    return id;
-}
-
-/**
- * @param  id consumer id
- * @param  sdp sdp offer from client in json
- * @return sdp answer
- */
-async function consumerWebRTCProcess(id, sdp, producer_id, use_sdp_transform = false) {
+        return;
+    let room_id = producers[producer_id].room_id
+        //-------------------------------------------------------------------- clear old track 
     try {
 
-        console.log("sdp3 ------------------------");
-        console.log(sdp)
-        var newsdp
-        if (use_sdp_transform) {
-            newsdp = await sdpFromJsonString(sdp)
-        } else {
-            newsdp = sdp
+        for (let _sender of producers[producer_id].peerConsumer.getSenders()) {
+            await producers[producer_id].peerConsumer.removeTrack(_sender);
         }
-        console.log("starting track")
-        producers[producer_id].stream.getTracks().forEach(track => consumers[id].peer.addTrack(track, producers[producer_id].stream));
-
-        const desc = new webrtc.RTCSessionDescription(newsdp);
-        await consumers[id].peer.setRemoteDescription(desc);
-        const answer = await consumers[id].peer.createAnswer({ 'offerToReceiveVideo': 1 });
-        await consumers[id].peer.setLocalDescription(answer);
-
     } catch (e) {
         console.log(e);
         console.log("\x1b[31m", "ERROR................", "\x1b[0m");
     }
-}
 
-// ======================================================== consumer WebRTC callback
-/**
- * @param  consumer_index consumer index
- * @param  producer_id producer id
- * @return void
- */
-async function consumerWebRTCCallback(id, producer_id) {
+    //-------------------------------------------------------------------- add new track 
 
-    // --------------------------------- detect disconnected
-    consumerOnIceConnectionStateChange(id)
-        // --------------------------------- send ice candidate to client
-    consumerOnIceCandidate(id, producer_id)
-}
-
-
-/**
- * @param  id consumer id
- * @return void
- */
-async function consumerOnIceConnectionStateChange(id) {
     try {
-        consumers[id].peer.oniceconnectionstatechange = (e) => {
-            try {
-                if (consumers[id] != null) {
-                    const connectionStatus2 = consumers[id].peer.iceConnectionState;
-                    if (["disconnected", "failed", "closed"].includes(connectionStatus2)) {
-                        console.log("\x1b[31m", "consumers: " + id + " - " + connectionStatus2, "\x1b[0m")
-                        removeConsumer(id)
-                    }
-                    if (["connected"].includes(connectionStatus2)) {
-                        console.log("\x1b[34m", "consumers: " + id + " - " + connectionStatus2, "\x1b[0m")
-                    }
+
+        for (let id in rooms[room_id].producers) {
+            if (producers[id] != null && id != producer_id) {
+                // ---------------------------------------------------------- add new track from other users in the room
+                for (let track of producers[id].stream.getTracks()) {
+                    await producers[producer_id].peerConsumer.addTrack(track, producers[id].stream)
                 }
-            } catch (e) {
-                console.log(e);
-                console.log("\x1b[31m", "ERROR................", "\x1b[0m");
+                // ----------------------------------------------------------
             }
         }
     } catch (e) {
         console.log(e);
         console.log("\x1b[31m", "ERROR................", "\x1b[0m");
     }
+
+    consumerOnIceCandidate(producer_id)
+    await consmerRenegotiation(producer_id)
 }
 
-/**
- * @param  consumer_index consumer index
- * @param  producer_id producer id
- * @return void
- */
-async function consumerOnIceCandidate(id, producer_id) {
+
+async function consmerRenegotiation(producer_id) {
     try {
-        consumers[id].peer.onicecandidate = (e) => {
+        const offer = await producers[producer_id].peerConsumer.createOffer({ 'offerToReceiveVideo': true });
+        await producers[producer_id].peerConsumer.setLocalDescription(offer);
+        var localDesc = await producers[producer_id].peerConsumer.localDescription
+        var sdp = await sdpToJsonString(localDesc)
+        _data = {
+            "producer_id": producer_id,
+            "sdp": sdp
+        }
+        io.to(producers[producer_id].socket_id).emit("consumer-sdp-from-server", _data)
+    } catch (e) {
+        console.log(e);
+        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
+    }
+}
+
+async function processSdpConsumer(producer_id, sdp) {
+
+    if (producers[producer_id] == null)
+        return;
+
+    var newsdp = await sdpFromJsonString(sdp)
+    const remoteDesc = new webrtc.RTCSessionDescription(newsdp);
+    await producers[producer_id].peerConsumer.setRemoteDescription(remoteDesc);
+}
+
+
+
+
+
+
+async function consumerOnIceCandidate(producer_id) {
+    try {
+        producers[producer_id].peerConsumer.onicecandidate = (e) => {
             if (!e || !e.candidate) return;
             try {
                 // console.log("ice candidate send to consumer: " + consumers[id].socket_id)
@@ -1340,57 +1171,14 @@ async function consumerOnIceCandidate(id, producer_id) {
                 var data = {
                     "candidate": newCandidate,
                     "producer_id": producers[producer_id].id,
-                    "consumer_id": consumers[id].id
                 }
-                console.log(data);
-                socket_ConsumerCandidateToClient(consumers[id].socket_id, data)
+                socket_ConsumerCandidateToClient(producers[producer_id].socket_id, data)
             } catch (e) {
                 console.log(e);
                 console.log("\x1b[31m", "ERROR................", "\x1b[0m");
             }
 
         }
-    } catch (e) {
-        console.log(e);
-        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
-    }
-}
-
-
-
-// -------------------------------------------------------------------------
-
-
-/**
- * @param  id consumer id
- * @return void
- */
-async function removeConsumer(id) {
-    try {
-        if (consumers[id] != null) {
-            console.log("remove consumer")
-            consumers[id].peer.close();
-            delete consumers[id]
-        }
-    } catch (e) {
-        console.log(e);
-        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
-    }
-}
-
-/**
- * @param  id producer id
- * @return void
- */
-async function removeConsumerByProducerId(id) {
-    try {
-        for (let c in consumers) {
-            if (consumers[c].producer_id == id || consumers[c].owner_producer_id == id) {
-                consumers[c].peer.close();
-                delete consumers[c];
-            }
-        }
-
     } catch (e) {
         console.log(e);
         console.log("\x1b[31m", "ERROR................", "\x1b[0m");

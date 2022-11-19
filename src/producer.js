@@ -149,7 +149,7 @@ async function producerWebRTCProcess(id, sdp, use_sdp_transform) {
         const desc = new webrtc.RTCSessionDescription(newsdp);
         await producers[id].peer.setRemoteDescription(desc);
         // const answer = await producers[id].peer.createAnswer({ 'offerToReceiveVideo': 1 });
-        const answer = await producers[id].peer.createAnswer();
+        const answer = await producers[id].peer.createAnswer({ 'offerToReceiveVideo': 1 });
         await producers[id].peer.setLocalDescription(answer);
     } catch (e) {
         console.log(e);
@@ -435,13 +435,13 @@ async function consumerUpdate(producer_id) {
             if( producers[producer_id].peerConsumer.getSenders()!=undefined && producers[producer_id].peerConsumer.getSenders()!=null )
             {
                 for (let _sender of producers[producer_id].peerConsumer.getSenders()) {
-                    await producers[producer_id].peerConsumer.removeTrack(_sender);
+                     producers[producer_id].peerConsumer.removeTrack(_sender);
                 }
             }
         }
         else
         {
-            producers[producer_id].peerConsumer = new webrtc.RTCPeerConnection()
+            producers[producer_id].peerConsumer = new webrtc.RTCPeerConnection(configurationPeerConnection, offerSdpConstraints)
         }
     } catch (e) {
         console.log(e);
@@ -451,9 +451,10 @@ async function consumerUpdate(producer_id) {
     try {
         for (let id in rooms[room_id].producers) {
             if (producers[id] != null && id != producer_id) {
+                console.log("\x1b[33m", "ADD CONSUMER TRACK for: "+producer_id, "\x1b[0m");
                 // ---------------------------------------------------------- add new track from other users in the room
                 for (let track of producers[id].stream.getTracks()) {
-                    await producers[producer_id].peerConsumer.addTrack(track, producers[id].stream)
+                     producers[producer_id].peerConsumer.addTrack(track, producers[id].stream)
                 }
                 // ----------------------------------------------------------
             }
@@ -485,14 +486,29 @@ async function consmerRenegotiation(producer_id) {
     }
 }
 
-async function processSdpConsumer(producer_id, sdp) {
-
-    if (producers[producer_id] == null)
+/**
+ * use when get socket from client to setUp remote
+ * @param {*} producer_id 
+ * @param {*} sdp 
+ * @returns 
+ */
+async function consumerSdpProcess(producer_id, sdp) {
+    
+    try
+    {
+        if (producers[producer_id] == null)
         return;
+        
+        var newsdp = await sdpFromJsonString(sdp)
+        const remoteDesc = new webrtc.RTCSessionDescription(newsdp);
+        await producers[producer_id].peerConsumer.setRemoteDescription(remoteDesc);
+    
+    }catch(e)
+    {
+       console.log(e);
+       console.log("\x1b[31m", "ERROR................", "\x1b[0m");
 
-    var newsdp = await sdpFromJsonString(sdp)
-    const remoteDesc = new webrtc.RTCSessionDescription(newsdp);
-    await producers[producer_id].peerConsumer.setRemoteDescription(remoteDesc);
+   }
 }
 
 async function consumerOnIceCandidate(producer_id) {
@@ -600,5 +616,5 @@ module.exports = {
     removeProducerWhenDisconectedFromSocket,
     endCall,
     consumerUpdate,
-    processSdpConsumer
+    consumerSdpProcess
 }

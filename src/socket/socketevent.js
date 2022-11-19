@@ -5,7 +5,7 @@ const {
     removeProducerWhenDisconectedFromSocket,
     endCall,
     consumerUpdate,
-    processSdpConsumer,
+    consumerSdpProcess,
 } = require('../producer')
 
 
@@ -55,7 +55,7 @@ io.on('connection', async function(socket) {
      * }
      */
     socket.on("consumer-sdp", function(data) {
-        processSdpConsumer(data['producer_id'], data["sdp"]);
+        consumerSdpProcess(data['producer_id'], data["sdp"]);
     });
     // ---------------------------------------------------------
     /**

@@ -42,7 +42,8 @@ class Producer {
         has_audio = true,
         peer = new webrtc.RTCPeerConnection(),
         peerConsumer = new webrtc.RTCPeerConnection(),
-        stream =  webrtc.MediaStream()
+        stream =  webrtc.MediaStream(),
+        platform = null,
     ) {
         this.socket_id = socket_id
         this.room_id = room_id
@@ -53,6 +54,7 @@ class Producer {
         this.peer = peer
         this.peerConsumer = peerConsumer
         this.stream = stream
+        this.platform = platform
     }
 }
 
@@ -71,6 +73,7 @@ class Producer {
     has_video = true,
     has_audio = true,
     sdp,
+    platform,
     use_sdp_transform = false) {
 
     if (producer_id == null || producer_id == undefined || producer_id == "") {
@@ -94,6 +97,7 @@ class Producer {
         new webrtc.RTCPeerConnection(configurationPeerConnection, offerSdpConstraints),
         new webrtc.RTCPeerConnection(configurationPeerConnection, offerSdpConstraints),
         new webrtc.MediaStream(),
+        platform
     )
 
     producers[producer_id] = producer
@@ -432,12 +436,36 @@ async function consumerUpdate(producer_id) {
     try {
         if(producers[producer_id].peerConsumer!=null)
         {
-            if( producers[producer_id].peerConsumer.getSenders()!=undefined && producers[producer_id].peerConsumer.getSenders()!=null )
+            // if(producers[producer_id].platform=="web")
+            // {
+                //--------------------------- remove stream
+                // if( producers[producer_id].peerConsumer!=null)
+                // {
+                //         producers[producer_id].peerConsumer.removeStream(
+                //             {video:true, audio:true}
+                //         );
+                // }
+                // for(var p in rooms[room_id].producers)
+                // {
+                //     if(p!=producer_id &&producers[p]!=null  && producers[producer_id].peerConsumer!=null)
+                //     {
+                //         producers[producer_id].peerConsumer.removeStream(
+                //             producers[p].stream.id
+                //         );
+                //     }
+                // }    
+            // }   
+            // else
             {
-                for (let _sender of producers[producer_id].peerConsumer.getSenders()) {
-                     producers[producer_id].peerConsumer.removeTrack(_sender);
+                 // remove track
+                if( producers[producer_id].peerConsumer.getSenders()!=undefined && producers[producer_id].peerConsumer.getSenders()!=null )
+                {
+                    for (let _sender of producers[producer_id].peerConsumer.getSenders()) {
+                         producers[producer_id].peerConsumer.removeTrack(_sender);
+                    }
                 }
-            }
+            } 
+
         }
         else
         {
@@ -452,11 +480,21 @@ async function consumerUpdate(producer_id) {
         for (let id in rooms[room_id].producers) {
             if (producers[id] != null && id != producer_id) {
                 console.log("\x1b[33m", "ADD CONSUMER TRACK for: "+producer_id, "\x1b[0m");
-                // ---------------------------------------------------------- add new track from other users in the room
-                for (let track of producers[id].stream.getTracks()) {
-                     producers[producer_id].peerConsumer.addTrack(track, producers[id].stream)
-                }
-                // ----------------------------------------------------------
+
+                // if(producers[producer_id].platform=="web")
+                // {
+                //     producers[producer_id].peerConsumer.addStream(
+                //         producers[id].stream
+                //     )
+                // }
+                // else
+                // {
+                    // ---------------------------------------------------------- add new track from other users in the room
+                    for (let track of producers[id].stream.getTracks()) {
+                         producers[producer_id].peerConsumer.addTrack(track, producers[id].stream)
+                    }
+                    // ----------------------------------------------------------
+                // }
             }
         }
     } catch (e) {
@@ -563,6 +601,7 @@ async function endCall(room_id, producer_id) {
                 name: producers[producer_id].name,
                 has_video: producers[producer_id].has_video,
                 has_audio: producers[producer_id].has_audio,
+                platform: producers[producer_id].platform,
             }
             id = room_id
         }
@@ -584,7 +623,8 @@ function getProducersFromRoomToArray(room_id, producer_id_except = null) {
                         "name": producers[p].name,
                         "has_video": producers[p].has_video,
                         "has_audio": producers[p].has_audio,
-                        "stream_id": producers[p].stream.id
+                        "stream_id": producers[p].stream.id,
+                        "platform": producers[p].platform,
                     });
                 }
             }

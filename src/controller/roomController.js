@@ -126,6 +126,7 @@ async function join({ body }, res) {
         console.log("has video: " + body.has_video)
         console.log("has audio: " + body.has_audio)
         console.log("room id: " + body.room_id)
+        console.log("platform: " + body.platform)
 
 
         if (rooms[body.room_id] == null) {
@@ -151,6 +152,7 @@ async function join({ body }, res) {
             body.has_video,
             body.has_audio,
             body.sdp,
+            body.platform,
             use_sdp_transform
         )
         let room_id = await addProducerToRoom(body.room_id, producer_id)
@@ -203,7 +205,7 @@ async function join({ body }, res) {
 
 }
 
-async function get(req, res)  {
+async function gets(req, res)  {
     var _rooms = []
     for (let r in rooms) {
         _rooms.push({
@@ -233,6 +235,6 @@ module.exports = {
     check,
     create,
     join,
-    get,
+    gets,
     getRoom
 }

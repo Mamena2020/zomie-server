@@ -45,13 +45,15 @@ socket info
             .build());
       ```    
 
-- server side
+- WebRTC
   - consumer listen to producer media have to before set offer local sdp 
+  - https://www.rtcmulticonnection.org/docs/removeStream/
 - js code tips
   - file management
     - https://stackoverflow.com/questions/57108371/exporting-multiple-functions-with-arguments 
   - routing  controller
     - https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/routes 
+
 
 - color console.log()
   ```

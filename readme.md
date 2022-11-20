@@ -1,3 +1,9 @@
+# zomie
+
+Media server for <a href="https://github.com/Mamena2020/zomie-app"> zomie app</a>
+Server running in nodejs. each client will have 2 active peer 1 for broadcasting &
+1 for consumer for all user in the room. this server using star topology & SFU(Selective Forwarding Unit) method for routing.
+
 #run
   - dev
     - npm run dev

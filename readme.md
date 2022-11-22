@@ -6,9 +6,11 @@ Server running in nodejs. Each client will have 2 active peer, 1 for broadcastin
 Server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">Socket.io</a> for signaling & messaging.
 
 
-#Topology SFU(Selective Forwarding Unit)
+#WebRTC Architecture - SFU(Selective Forwarding Unit)
 
-<img src="public/img/sfu.png" width="350" height="350">
+<a href="https://medium.com/securemeeting/webrtc-architecture-basics-p2p-sfu-mcu-and-hybrid-approaches-6e7d77a46a66">
+<img src="public/img/sfu.png" height="250">
+</a>
 
 
 #how to use
@@ -27,13 +29,14 @@ Server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a> for
 
 - socket io
   -  version match info[1]
-    - server(node js): "socket.io": "^2.4.1"
-    - client(flutter):  socket_io_client: ^1.0.1 | ^1.0.2
+     - server(node js): "socket.io": "^2.4.1"
+     - client(flutter):  socket_io_client: ^1.0.1 | ^1.0.2
+  
   -  version match info[2]
-    - server(node js): "socket.io": "^4.5.3"
-    - client(flutter):  socket_io_client: ^2.0.0
+     - server(node js): "socket.io": "^4.5.3"
+     - client(flutter):  socket_io_client: ^2.0.0
 
-  - Code for working in flutter.
+  - Code for working on flutter.
       ```
           import 'package:socket_io_client/socket_io_client.dart' as IO;
           IO.Socket socket = IO.io(host,IO.OptionBuilder()

@@ -1,9 +1,9 @@
 # Zomie - media server
 
 Media server for <a href="https://github.com/Mamena2020/zomie-app"> zomie app</a>. 
-Server running in nodejs. Each client will have 2 active peer, 1 for broadcasting &
+Server running on nodejs. Each client will have 2 active peer, 1 for broadcasting &
 1 as consumer for listen to all user in the room. 
-Server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">Socket.io</a> for signaling & messaging.
+this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">Socket.io</a> for signaling & messaging.
 
 
 #WebRTC Architecture - SFU (Selective Forwarding Unit)

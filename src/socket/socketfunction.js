@@ -9,6 +9,8 @@ var io = null
  function socket_ProducerCandidateToClient(socket_id, data) {
     io.to(socket_id).emit("producer-candidate-from-server", data)
 }
+
+
 /**
  * @param  socket_id socket id target send
  * @param {Map} data  {candidate,producer_id} candidate from server to client & producer_id 
@@ -36,6 +38,21 @@ function socket_ConsumerSdpFromServer(socket_id, data) {
     
     io.to(socket_id).emit("consumer-sdp-from-server", data)
 }
+
+/**
+ * 
+ * @param {String} socket_id 
+ * @param {Map} data {
+ * producer_id,
+ * room_id
+ * 
+ * } 
+ */
+function socket_ConsumerUpdateFromServer(socket_id, data) {
+    console.log("consumer-update-from-server")
+    io.to(socket_id).emit("consumer-update-from-server", data)
+}
+
 async function socket_GetSocketById(socket_id)
 {
     return io.sockets.sockets.get(socket_id);
@@ -52,5 +69,6 @@ module.exports =  {
     socket_ConsumerCandidateToClient,
     socket_ProducerEventNotify,
     socket_ConsumerSdpFromServer,
-    socket_GetSocketById
+    socket_GetSocketById,
+    socket_ConsumerUpdateFromServer
 }

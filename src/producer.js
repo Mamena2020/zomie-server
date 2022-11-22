@@ -8,7 +8,8 @@ const { socket_ProducerCandidateToClient,
     socket_ConsumerCandidateToClient,
     socket_ProducerEventNotify,
     socket_ConsumerSdpFromServer,
-    socket_GetSocketById
+    socket_GetSocketById,
+    socket_ConsumerUpdateFromServer
 } = require('./socket/socketfunction')
 
 
@@ -37,9 +38,11 @@ class Producer {
         socket_id = null,
         room_id = null,
         id = null,
+        user_id=null,
         name = null,
         has_video = true,
         has_audio = true,
+        type = null,
         peer = new webrtc.RTCPeerConnection(),
         peerConsumer = new webrtc.RTCPeerConnection(),
         stream =  webrtc.MediaStream(),
@@ -48,9 +51,11 @@ class Producer {
         this.socket_id = socket_id
         this.room_id = room_id
         this.id = id
+        this.user_id = user_id
         this.name = name
         this.has_video = has_video
         this.has_audio = has_audio
+        this.type = type
         this.peer = peer
         this.peerConsumer = peerConsumer
         this.stream = stream
@@ -69,9 +74,11 @@ class Producer {
     socket_id,
     room_id,
     producer_id,
-    producer_name,
+    user_id,
+    user_name,
     has_video = true,
     has_audio = true,
+    type,
     sdp,
     platform,
     use_sdp_transform = false) {
@@ -79,8 +86,8 @@ class Producer {
     if (producer_id == null || producer_id == undefined || producer_id == "") {
         producer_id = uuidv4()
     }
-    if (producer_name == undefined || producer_name == null) {
-        producer_name = "user-" + String(Date.now())
+    if (user_name == undefined || user_name == null) {
+        user_name = "user-" + String(Date.now())
     }
     if (producers[producer_id] != null) {
         if (producers[producer_id].room_id != room_id) {
@@ -91,9 +98,11 @@ class Producer {
         socket_id,
         room_id,
         producer_id,
-        producer_name,
+        user_id,
+        user_name,
         has_video,
         has_audio,
+        type, // user | screen
         new webrtc.RTCPeerConnection(configurationPeerConnection, offerSdpConstraints),
         new webrtc.RTCPeerConnection(configurationPeerConnection, offerSdpConstraints),
         new webrtc.MediaStream(),
@@ -207,7 +216,10 @@ async function producerOnIceCandidate(id) {
                 var data = {
                         "candidate": newCandidate,
                         "producer_id": producers[id].id,
-                        "room_id": producers[id].room_id
+                        "user_id": producers[id].user_id,
+                        "room_id": producers[id].room_id,
+                        "type": producers[id].type,
+
                     }
                     // console.log(data);
                 socket_ProducerCandidateToClient(producers[id].socket_id, data)
@@ -259,23 +271,35 @@ async function producerAddCandidate(producer_id, candidate) {
 async function sendNotify(room_id, producer_id, type, message = '', ) {
     try {
         console.log("starting notify " + type)
+        
+        var _producers = []
+        if(type == "join")
+        {
+            _producers = await getProducersFromRoomToArray(room_id)
+        }
+        if(type == "leave")
+        {
+            _producers = await getProducersFromRoomToArray(room_id,producer_id)
+        }
+
+
         var data = {
             "room_id": room_id,
             "producer": {
                 "id": producer_id,
+                "user_id": producers[producer_id].user_id,
                 "name": producers[producer_id].name,
-                "stream_id": producers[producer_id].stream.id,
+                "stream_id": producers[producer_id].stream!=null?producers[producer_id].stream.id:'',
                 "has_video": producers[producer_id].has_video,
                 "has_audio": producers[producer_id].has_audio,
             },
-            "producers": type == "join" ?
-                getProducersFromRoomToArray(room_id) : type == "leave" ? getProducersFromRoomToArray(room_id, producer_id) : [],
+            "producers": _producers,
             "type": type,
             "message": message
         }
         console.log(data)
+
         for (let p in rooms[room_id].producers) {
-            // if (p != producer_id && producers[p] != null) {
             if (producers[p] != null) {
                 if (type == "join" || type == "leave") {
                     // send to all in the room
@@ -436,36 +460,13 @@ async function consumerUpdate(producer_id) {
     try {
         if(producers[producer_id].peerConsumer!=null)
         {
-            // if(producers[producer_id].platform=="web")
-            // {
-                //--------------------------- remove stream
-                // if( producers[producer_id].peerConsumer!=null)
-                // {
-                //         producers[producer_id].peerConsumer.removeStream(
-                //             {video:true, audio:true}
-                //         );
-                // }
-                // for(var p in rooms[room_id].producers)
-                // {
-                //     if(p!=producer_id &&producers[p]!=null  && producers[producer_id].peerConsumer!=null)
-                //     {
-                //         producers[producer_id].peerConsumer.removeStream(
-                //             producers[p].stream.id
-                //         );
-                //     }
-                // }    
-            // }   
-            // else
-            {
-                 // remove track
+               // remove track
                 if( producers[producer_id].peerConsumer.getSenders()!=undefined && producers[producer_id].peerConsumer.getSenders()!=null )
                 {
                     for (let _sender of producers[producer_id].peerConsumer.getSenders()) {
                          producers[producer_id].peerConsumer.removeTrack(_sender);
                     }
                 }
-            } 
-
         }
         else
         {
@@ -478,23 +479,13 @@ async function consumerUpdate(producer_id) {
     //-------------------------------------------------------------------- add new track 
     try {
         for (let id in rooms[room_id].producers) {
-            if (producers[id] != null && id != producer_id) {
+            if (producers[id] != null && id != producer_id && producers[id].stream!=null) {
                 console.log("\x1b[33m", "ADD CONSUMER TRACK for: "+producer_id, "\x1b[0m");
-
-                // if(producers[producer_id].platform=="web")
-                // {
-                //     producers[producer_id].peerConsumer.addStream(
-                //         producers[id].stream
-                //     )
-                // }
-                // else
-                // {
-                    // ---------------------------------------------------------- add new track from other users in the room
+                  // ---------------------------------------------------------- add new track from other users in the room 
                     for (let track of producers[id].stream.getTracks()) {
                          producers[producer_id].peerConsumer.addTrack(track, producers[id].stream)
                     }
-                    // ----------------------------------------------------------
-                // }
+                  
             }
         }
     } catch (e) {
@@ -504,6 +495,8 @@ async function consumerUpdate(producer_id) {
 
     consumerOnIceCandidate(producer_id)
     await consmerRenegotiation(producer_id)
+
+   
 }
 
 
@@ -541,6 +534,11 @@ async function consumerSdpProcess(producer_id, sdp) {
         const remoteDesc = new webrtc.RTCSessionDescription(newsdp);
         await producers[producer_id].peerConsumer.setRemoteDescription(remoteDesc);
     
+         socket_ConsumerUpdateFromServer(producers[producer_id].socket_id,{
+                "producer_id":producer_id,
+                "room_id": producers[producer_id].room_id
+            })
+            
     }catch(e)
     {
        console.log(e);
@@ -598,10 +596,12 @@ async function endCall(room_id, producer_id) {
         if (rooms[room_id] != null) {
             rooms[room_id].producers[producer_id] = {
                 id: producers[producer_id].id,
+                user_id: producers[producer_id].user_id,
                 name: producers[producer_id].name,
                 has_video: producers[producer_id].has_video,
                 has_audio: producers[producer_id].has_audio,
                 platform: producers[producer_id].platform,
+                type: producers[producer_id].type,
             }
             id = room_id
         }
@@ -620,11 +620,13 @@ function getProducersFromRoomToArray(room_id, producer_id_except = null) {
                 if (producers[p] != null && p != producer_id_except) {
                     _producers.push({
                         "id": producers[p].id,
+                        "user_id": producers[p].user_id,
                         "name": producers[p].name,
                         "has_video": producers[p].has_video,
                         "has_audio": producers[p].has_audio,
-                        "stream_id": producers[p].stream.id,
+                        "stream_id": producers[p].stream!=null? producers[p].stream.id:'',
                         "platform": producers[p].platform,
+                        "type":producers[p].type,
                     });
                 }
             }
@@ -636,6 +638,8 @@ function getProducersFromRoomToArray(room_id, producer_id_except = null) {
     console.log(_producers)
     return _producers;
 }
+
+
 
 
 module.exports = {

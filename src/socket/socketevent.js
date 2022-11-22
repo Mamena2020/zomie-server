@@ -6,6 +6,7 @@ const {
     endCall,
     consumerUpdate,
     consumerSdpProcess,
+    screenAddCandidate
 } = require('../producer')
 
 
@@ -14,26 +15,19 @@ const {
 module.exports = (io)=>{
 
 io.on('connection', async function(socket) {
+
+
     console.log("new connection: " + socket.id);
-    // ---------------------------------------------------------
-    /**
-     * @param {Map} data {producer_id, candidate{}}
-     */
+    
+
     socket.on("producer-candidate-from-client", function(data) {
         producerAddCandidate(data['producer_id'], data['candidate']);
     });
-    // ---------------------------------------------------------
-    /**
-     * @param {String} room_id 
-     * @param {String} current_producer_id
-     * @param {String} sdp
-     * 
-     */
+   
+   
 
-    // ---------------------------------------------------------
-    /**
-     * @param {Map} data {producer_id, socket_id}
-     */
+    
+   
     socket.on("update-data", function(data) {
         updateProducer(data);
     });

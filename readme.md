@@ -1,10 +1,17 @@
 # zomie
 
 Media server for <a href="https://github.com/Mamena2020/zomie-app"> zomie app</a>. 
-Server running in nodejs. each client will have 2 active peer 1 for broadcasting &
-1 for consumer for all user in the room. this server using star topology & SFU(Selective Forwarding Unit) method for routing.
+Server running in nodejs. Each client will have 2 active peer 1 for broadcasting &
+1 as consumer for listen to all user in the room. 
+Server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">socket.io</a> for signaling & messaging.
 
-#run
+#Topology SFU(Selective Forwarding Unit)
+<img src="public/img/sfu.png" width="370">
+
+
+#how to use
+  - install
+    - npm install
   - dev
     - npm run dev
     - nodemon server
@@ -13,32 +20,14 @@ Server running in nodejs. each client will have 2 active peer 1 for broadcasting
     - node server   
 
 
-socket info
-  - server:   
-  - flutter:  
-
-
-#cors allow 
-  - issues
-    - https://stackoverflow.com/questions/43150051/how-to-enable-cors-nodejs-with-express  
-
-#web RTC
-  - Articles
-    - https://bloggeek.me/webrtc-rtcpeerconnection-one-per-stream/
-  - Videos - Topologies
-    - https://www.youtube.com/watch?v=N1yj6gI2CTE&ab_channel=EngineeringSemester
-    - https://www.youtube.com/watch?v=d2N0d6CKrbk&ab_channel=TsahiLevent-Levi
-  - issues
-    - https://stackoverflow.com/questions/53251527/webrtc-video-is-not-displaying
-
 
 # Note
 
 - socket io
-  - version info match [1]
+  -  version match info[1]
     - server(node js): "socket.io": "^2.4.1"
     - client(flutter):  socket_io_client: ^1.0.1 | ^1.0.2
-  - version info match [2]
+  -  version match info[2]
     - server(node js): "socket.io": "^4.5.3"
     - client(flutter):  socket_io_client: ^2.0.0
 
@@ -51,9 +40,22 @@ socket info
             .build());
       ```    
 
+# References
+
 - WebRTC
-  - consumer listen to producer media have to before set offer local sdp 
-  - https://www.rtcmulticonnection.org/docs/removeStream/
+  - Articles
+    - https://bloggeek.me/webrtc-rtcpeerconnection-one-per-stream/
+    - consumer listen to producer media have to before set offer local sdp 
+    - https://www.rtcmulticonnection.org/docs/removeStream/
+  - Videos - Topologies
+    - https://www.youtube.com/watch?v=N1yj6gI2CTE&ab_channel=EngineeringSemester
+    - https://www.youtube.com/watch?v=d2N0d6CKrbk&ab_channel=TsahiLevent-Levi
+  - issues
+    - https://stackoverflow.com/questions/53251527/webrtc-video-is-not-displaying
+
+- Cors  
+  - issues
+    - https://stackoverflow.com/questions/43150051/how-to-enable-cors-nodejs-with-express      
 - js code tips
   - file management
     - https://stackoverflow.com/questions/57108371/exporting-multiple-functions-with-arguments 

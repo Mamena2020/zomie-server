@@ -1,21 +1,26 @@
 require('dotenv').config();
-const express = require('express')
-const app = express()
-const server = require('http').Server(app) // running express on http
-const io = require('socket.io')(server) // running socket io server
-const cors = require('cors');
-const bodyParser = require('body-parser')
-
 const host = process.env.HOST
 const port = process.env.PORT
 
+const express = require('express')
+const cors = require('cors');
+const bodyParser = require('body-parser')
+
+const app = express()
+const server = require('http').Server(app) // running express on http
+const io = require('socket.io')(server) // running socket.io on  http
+
+
 // -----------------------------------------------------------------------------------------------
+// middleware policy,  allow all origin to access this server 
 app.use(cors())
+// make dir public as access to public
 app.use(express.static('public'));
 // support parsing of application/json type post data
 app.use(bodyParser.json());
 //support parsing of application/x-www-form-urlencoded post data
 app.use(bodyParser.urlencoded({ extended: true }));
+//running server
 server.listen(port, host, () => {
     console.log("server running : " + host + ":" + port)
 })
@@ -23,10 +28,10 @@ server.listen(port, host, () => {
 require('./src/socket/socketevent')(io)
 require('./src/socket/socketfunction').init(io)
 require('./src/route/route')(app) 
-// Failed to set remote answer sdp: Called in wrong state: kStable]
 
 
 process.on('uncaughtException', function (error) {
+    console.log("\x1b[31m", "ERROR uncaughtException................", "\x1b[0m");
     console.log(error.stack);
  });
 

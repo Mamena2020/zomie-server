@@ -7,16 +7,18 @@ const { createRoom} =  require('../room')
  const { createProducer,
     sendNotify,
     addProducerToRoom,
-    getProducersFromRoomToArray
+    getProducersFromRoomToArray,
+    addScreen
 }   = require('../producer')
 
 const {socket_GetSocketById} = require("../socket/socketfunction")
 
 
 /**
- * 
- * @param {*} body = > map 
- * @param {*} res 
+ * Get room by room id
+ * @param {*} req => room id : 
+ * string id (required)
+ * @return json
  */
 async function getRoom(req,res)
 {   
@@ -48,6 +50,18 @@ async function getRoom(req,res)
     res.json(data)
 }
 
+/**
+ * check room validation 
+ * 
+ * @param {*} body => map {
+ * 
+ * string room_id (Required),
+ * 
+ * string password (optional)
+ * 
+ * }
+ * @return json
+ */
 async function check({body},res)
 {
     var data = {
@@ -81,6 +95,18 @@ async function check({body},res)
     res.json(data)
 }
 
+
+/**
+ * create room
+ * @param {Map} body=> map {
+ * 
+ * String password (optional),
+ * 
+ * int life_time  (optional)
+ * 
+ * } 
+ * @return json
+ */
 async function create({ body }, res) {
     try {
 
@@ -116,15 +142,40 @@ async function create({ body }, res) {
     res.status(409)
 }
 
+/**
+ * Join room 
+ * @param {Map} body {
+ * 
+ * string producer_id (required)
+ * 
+ * string user_name (required)
+ * 
+ * bool has_video (required)
+ * 
+ * bool has_audio (required)
+ * 
+ * json sdp (required)
+ * 
+ * string room_id (required)
+ * 
+ * bool use_sdp_transform (optional)
+ * 
+ * string platform (required)
+ * 
+ * } 
+ * @return json 
+ */
 async function join({ body }, res) {
     var data = {};
     var statusCode = 200
     try {
         console.log("join room")
         console.log("id: " + body.producer_id)
-        console.log("name: " + body.producer_name)
+        console.log("user id: " + body.user_id)
+        console.log("name: " + body.user_name)
         console.log("has video: " + body.has_video)
         console.log("has audio: " + body.has_audio)
+        console.log("type: " + body.type)
         console.log("room id: " + body.room_id)
         console.log("platform: " + body.platform)
 
@@ -148,9 +199,11 @@ async function join({ body }, res) {
             socket.id,
             body.room_id,
             body.producer_id,
-            body.producer_name,
+            body.user_id,
+            body.user_name,
             body.has_video,
             body.has_audio,
+            body.type,
             body.sdp,
             body.platform,
             use_sdp_transform
@@ -182,8 +235,9 @@ async function join({ body }, res) {
                 sdp: newsdp,
                 room_id: producers[producer_id].room_id,
                 producer_id: producers[producer_id].id,
-                producer_name: producers[producer_id].name,
-                producers: getProducersFromRoomToArray(room_id)
+                user_id: producers[producer_id].user_id,
+                user_name: producers[producer_id].name,
+                // producers: getProducersFromRoomToArray(room_id)
             }
         }
 
@@ -193,7 +247,7 @@ async function join({ body }, res) {
             "join")
 
     } catch (e) {
-        statusCode = 200
+        statusCode = 409
         data = {
             "message": "conflic",
             "data": {}
@@ -204,7 +258,9 @@ async function join({ body }, res) {
     res.json(data)
 
 }
-
+/** Get all active room
+ * @return json
+ */
 async function gets(req, res)  {
     var _rooms = []
     for (let r in rooms) {
@@ -231,10 +287,11 @@ async function gets(req, res)  {
 }
 
 
+
 module.exports = {
     check,
     create,
     join,
     gets,
-    getRoom
+    getRoom,
 }

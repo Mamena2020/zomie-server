@@ -6,7 +6,7 @@ Server running in nodejs. Each client will have 2 active peer, 1 for broadcastin
 Server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">Socket.io</a> for signaling & messaging.
 
 
-#WebRTC Architecture - SFU(Selective Forwarding Unit)
+#WebRTC Architecture - SFU (Selective Forwarding Unit)
 
 <a href="https://medium.com/securemeeting/webrtc-architecture-basics-p2p-sfu-mcu-and-hybrid-approaches-6e7d77a46a66">
 <img src="public/img/sfu.png" height="250">

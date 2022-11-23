@@ -10,7 +10,6 @@ const app = express()
 const server = require('http').Server(app) // running express on http
 const io = require('socket.io')(server) // running socket.io on  http
 
-
 // -----------------------------------------------------------------------------------------------
 // middleware policy,  allow all origin to access this server 
 app.use(cors())

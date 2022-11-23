@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid')
-const {rooms}  = require('./data')
+const {rooms}  = require('../data')
 
 const timeIntervalMonitoringRoomInSec = process.env.ROOM_MONITOR_INTERVAL
 
@@ -16,7 +16,7 @@ class Room {
 /**
  * @return room id
  */
- async function createRoom(
+ async function create(
     password, life_time
 ) {
     var id = uuidv4().substring(0, 8)
@@ -35,7 +35,7 @@ class Room {
  * @param  id room id
  * @return void
  */
- async function removeRoom(id) {
+ async function remove(id) {
     try {
         delete rooms[id]
         console.log("remove room: " + id)
@@ -57,7 +57,7 @@ class Room {
             console.log("monitoring room: " + id);
             console.log("total producer in list:" + Object.keys(rooms[id].producers).length)
             if (Object.keys(rooms[id].producers).length <= 0 && Date.now() > rooms[id].life_time) {
-                await removeRoom(id)
+                await remove(id)
                 clearInterval(monitor)
             } 
         } catch (e) {
@@ -67,9 +67,69 @@ class Room {
     }, timeIntervalMonitoringRoomInSec);
 }
 
+function get(id,res)
+{
+    var data = {
+        "id":id,
+        "message": "room not found",
+        "participants": 0,
+        "password":false
+    }
+    var statusCode = 404
+    try {
+        console.log("get room : "+id)
+        if (rooms[id] != null) {
+            statusCode = 200
+            data = {
+                "id":id,
+                "message": "room found",
+                "participants": Object.keys(rooms[id].producers).length, 
+                "password": rooms[id].password!=null? true: false
+            }
+        }
+        console.log(data)
+    } catch (e) {
+        console.log(e)
+    }
+    res.status(statusCode)
+    res.json(data)
+}
+
+function check(id,password, res)
+{
+    var data = {
+        "message": "room found"
+    }
+    var statusCode = 200
+    try {
+        console.log("check room")
+        if (rooms[id] == null) {
+            statusCode = 404
+            data = {
+                "message": "room not found"
+            }
+
+        } else {
+            if (rooms[id].password != null && rooms[id].password != password) {
+                statusCode = 403
+                data = {
+                    "message": "Wrong password"
+                }
+            }
+        }
+        console.log(data)
+    } catch (e) {
+        statusCode = 404
+        console.log(e)
+    }
+    res.status(statusCode)
+    res.json(data)
+}
+
+
 
 module.exports = {
-    roomMonitor,
-    removeRoom,
-    createRoom
+    create,
+    get,
+    check
 }

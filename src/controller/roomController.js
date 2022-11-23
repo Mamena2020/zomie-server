@@ -1,17 +1,8 @@
 const {rooms,producers}  = require('../data')
-const {addMinutes,
-    sdpToJsonString,
-} = require('../utils')
-const { createRoom} =  require('../room')
-
- const { createProducer,
-    sendNotify,
-    addProducerToRoom,
-    getProducersFromRoomToArray,
-    addScreen
-}   = require('../producer')
-
-const {socket_GetSocketById} = require("../socket/socketfunction")
+const utils = require('../utils')
+const roomService =  require('../services/roomService')
+const producerService = require('../services/producerService')
+const socketfunction = require("../socket/socketfunction")
 
 
 /**
@@ -23,31 +14,7 @@ const {socket_GetSocketById} = require("../socket/socketfunction")
 async function getRoom(req,res)
 {   
     var id = req.query.id;
-
-    var data = {
-        "id":id,
-        "message": "room not found",
-        "participants": 0,
-        "password":false
-    }
-    var statusCode = 404
-    try {
-        console.log("get room : "+id)
-        if (rooms[id] != null) {
-            statusCode = 200
-            data = {
-                "id":id,
-                "message": "room found",
-                "participants": Object.keys(rooms[id].producers).length, 
-                "password": rooms[id].password!=null? true: false
-            }
-        }
-        console.log(data)
-    } catch (e) {
-        console.log(e)
-    }
-    res.status(statusCode)
-    res.json(data)
+    return roomService.get(id,res)
 }
 
 /**
@@ -64,35 +31,9 @@ async function getRoom(req,res)
  */
 async function check({body},res)
 {
-    var data = {
-        "message": "room found"
-    }
-    var statusCode = 200
-    try {
-        console.log("check room")
-        console.log(body.room_id)
-
-        if (rooms[body.room_id] == null) {
-            statusCode = 404
-            data = {
-                "message": "room not found"
-            }
-
-        } else {
-            if (rooms[body.room_id].password != null && rooms[body.room_id].password != body.password) {
-                statusCode = 403
-                data = {
-                    "message": "Wrong password"
-                }
-            }
-        }
-        console.log(data)
-    } catch (e) {
-        statusCode = 404
-        console.log(e)
-    }
-    res.status(statusCode)
-    res.json(data)
+    var id = body.room_id
+    var password = body.password
+    return roomService.check(id,password,res)
 }
 
 
@@ -116,12 +57,12 @@ async function create({ body }, res) {
         }
 
         var date = new Date(Date.now())
-        var life_time = addMinutes(date, 1); // default 1 minutes
+        var life_time = utils.addMinutes(date, 1); // default 1 minutes
         if (body.life_time != undefined || body.life_time != null) {
-            life_time = addMinutes(date, body.life_time)
+            life_time = utils.addMinutes(date, body.life_time)
         }
 
-        var id = await createRoom(password, life_time)
+        var id = await roomService.create(password, life_time)
         if (id == null || id == undefined) {
             throw "failed to create room"
         }
@@ -194,8 +135,8 @@ async function join({ body }, res) {
         }
 
         // var socket = await io.sockets.sockets.get(body.socket_id)
-        var socket = await socket_GetSocketById(body.socket_id)
-        var producer_id = await createProducer(
+        var socket = await socketfunction.getSocketById(body.socket_id)
+        var producer_id = await producerService.create(
             socket.id,
             body.room_id,
             body.producer_id,
@@ -208,7 +149,7 @@ async function join({ body }, res) {
             body.platform,
             use_sdp_transform
         )
-        let room_id = await addProducerToRoom(body.room_id, producer_id)
+        let room_id = await producerService.addToRoom(body.room_id, producer_id)
         if (producers[producer_id] == null || room_id == null) {
             statusCode = 427
             data = {
@@ -224,7 +165,7 @@ async function join({ body }, res) {
         var sdp = await producers[producer_id].peer.localDescription
         var newsdp
         if (use_sdp_transform) {
-            newsdp = await sdpToJsonString(sdp)
+            newsdp = await utils.sdpToJsonString(sdp)
         } else {
             newsdp = sdp
         }
@@ -241,7 +182,7 @@ async function join({ body }, res) {
             }
         }
 
-        await sendNotify(
+        await producerService.sendNotify(
             room_id,
             producer_id,
             "join")

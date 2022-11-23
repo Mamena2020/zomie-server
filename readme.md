@@ -14,6 +14,8 @@ this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a
 
 
 #how to use
+  - config
+    - create your .env from .env.example, & fill the credential
   - install
     - npm install
   - dev

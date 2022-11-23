@@ -1,15 +1,5 @@
-const {   
-    producerAddCandidate,
-    sendNotify,
-    updateProducer,
-    removeProducerWhenDisconectedFromSocket,
-    endCall,
-    consumerUpdate,
-    consumerSdpProcess,
-    screenAddCandidate
-} = require('../producer')
-
-
+const producerService = require('../services/producerService')
+const consumerService = require("../services/consumerService")
 
 
 module.exports = (io)=>{
@@ -21,16 +11,12 @@ io.on('connection', async function(socket) {
     
 
     socket.on("producer-candidate-from-client", function(data) {
-        producerAddCandidate(data['producer_id'], data['candidate']);
-    });
-   
-   
-
-    
+        producerService.addCandidate(data['producer_id'], data['candidate']);
+    })
    
     socket.on("update-data", function(data) {
-        updateProducer(data);
-    });
+        producerService.updateData(data);
+    })
 
     // 1
     /**
@@ -39,8 +25,8 @@ io.on('connection', async function(socket) {
      * }
      */
     socket.on("consumer-update", function(data) {
-        consumerUpdate(data["producer_id"])
-    });
+        consumerService.update(data["producer_id"])
+    })
     // 2
     /**
      * @param {Map} data{
@@ -49,15 +35,15 @@ io.on('connection', async function(socket) {
      * }
      */
     socket.on("consumer-sdp", function(data) {
-        consumerSdpProcess(data['producer_id'], data["sdp"]);
-    });
+        consumerService.sdpProcess(data['producer_id'], data["sdp"]);
+    })
     // ---------------------------------------------------------
     /**
      * @param {Map} data {producer_id, room_id, message}
      */
     socket.on("send-message", function(data) {
-        sendNotify(data["room_id"], data["producer_id"], "message", data["message"])
-    });
+        producerService.sendNotify(data["room_id"], data["producer_id"], "message", data["message"])
+    })
 
     /**
      * @param {Map} data {producer_id, room_id}
@@ -65,7 +51,7 @@ io.on('connection', async function(socket) {
     socket.on("end-call", function(data) {
         try {
             console.log("\x1b[35m", "END CALL --------------", "\x1b[0m");
-            endCall(data["room_id"], data["producer_id"])
+            producerService.endCall(data["room_id"], data["producer_id"])
         } catch (e) {
             console.log(e)
         }
@@ -73,6 +59,6 @@ io.on('connection', async function(socket) {
 
     socket.on('disconnect', () => {
         console.log("User disconnected: " + socket.id)
-        removeProducerWhenDisconectedFromSocket(socket.id)
+        producerService.removeWhenDisconectedFromSocket(socket.id)
     })
 })}

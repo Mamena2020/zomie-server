@@ -10,7 +10,6 @@ var io = null
     io.to(socket_id).emit("producer-candidate-from-server", data)
 }
 
-
 /**
  * @param  socket_id socket id target send
  * @param {Map} data  {candidate,producer_id} candidate from server to client & producer_id 
@@ -35,7 +34,6 @@ function producerEventNotify(socket_id, data) {
 
 function consumerSdpFromServer(socket_id, data) {
     console.log("consumer-sdp-from-server")
-    
     io.to(socket_id).emit("consumer-sdp-from-server", data)
 }
 

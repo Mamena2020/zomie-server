@@ -129,12 +129,11 @@ async function join({ body }, res) {
             }
             throw "room not found"
         }
-        var use_sdp_transform = false;
-        if (body.use_sdp_transform === true || body.use_sdp_transform == undefined) {
-            use_sdp_transform = true
+        var use_sdp_transform = body.use_sdp_transform;
+        if ( use_sdp_transform == null || use_sdp_transform== undefined) {
+            use_sdp_transform = false
         }
 
-        // var socket = await io.sockets.sockets.get(body.socket_id)
         var socket = await socketfunction.getSocketById(body.socket_id)
         var producer_id = await producerService.create(
             socket.id,
@@ -158,10 +157,8 @@ async function join({ body }, res) {
             }
             throw "failed to join room"
         }
-        // add producer to room
-
         // --------------------------------- send back sdp to client
-        console.log("sdp local")
+        // console.log("sdp local")
         var sdp = await producers[producer_id].peer.localDescription
         var newsdp
         if (use_sdp_transform) {
@@ -178,11 +175,10 @@ async function join({ body }, res) {
                 producer_id: producers[producer_id].id,
                 user_id: producers[producer_id].user_id,
                 user_name: producers[producer_id].name,
-                // producers: getProducersFromRoomToArray(room_id)
             }
         }
 
-        await producerService.sendNotify(
+        await producerService.notify(
             room_id,
             producer_id,
             "join")

@@ -42,7 +42,7 @@ io.on('connection', async function(socket) {
      * @param {Map} data {producer_id, room_id, message}
      */
     socket.on("send-message", function(data) {
-        producerService.sendNotify(data["room_id"], data["producer_id"], "message", data["message"])
+        producerService.notify(data["room_id"], data["producer_id"], "message", data["message"])
     })
 
     /**

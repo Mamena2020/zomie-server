@@ -8,7 +8,7 @@ const utils = require("../utils")
 /**
  * flow->
  * after user join room, then will notif to all user via socket.
- * each client will access this updateConsumer to create consumer for then to stream media
+ * each client will access this update to create consumer for then to stream media
  */
 async function update(producer_id) {
     if (producers[producer_id] == null)

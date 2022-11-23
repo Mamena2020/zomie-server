@@ -242,7 +242,7 @@ async function addCandidate(producer_id, candidate) {
  * @param {String} type type of notify: "join" | "leave" | "update" | "message" | "start_screen" | "stop_screen"
  * @param {String} message message
  */
-async function sendNotify(room_id, producer_id, type, message = '', ) {
+async function notify(room_id, producer_id, type, message = '', ) {
     try {
         console.log("starting notify " + type)
         
@@ -327,7 +327,7 @@ async function updateData(data) {
                 rooms[room.id].producers[producer.id].has_video = data["producer"]["has_video"]
                 rooms[room.id].producers[producer.id].has_audio = data["producer"]["has_audio"]
             }
-            sendNotify(room.id, producer.id, "update");
+            notify(room.id, producer.id, "update");
         }
 
     } catch (e) {
@@ -422,7 +422,7 @@ async function removeWhenDisconectedFromSocket(socket_id) {
 
 async function endCall(room_id, producer_id) {
     if (rooms[room_id] != null && producers[producer_id] != null) {
-        await sendNotify(room_id, producer_id, "leave")
+        await notify(room_id, producer_id, "leave")
         await remove(producer_id)
     }
 }
@@ -491,7 +491,7 @@ module.exports = {
     addCandidate,
     addToRoom,
     getProducersFromRoomToArray,
-    sendNotify,
+    notify,
     updateData,
     removeWhenDisconectedFromSocket,
     endCall

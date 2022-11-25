@@ -37,6 +37,10 @@ io.on('connection', async function(socket) {
     socket.on("consumer-sdp", function(data) {
         consumerService.sdpProcess(data['producer_id'], data["sdp"]);
     })
+
+    socket.on("negotiation-sdp", function(data) {
+        producerService.handleRemoteSdp(data['producer_id'], data["sdp"]);
+    })
     // ---------------------------------------------------------
     /**
      * @param {Map} data {producer_id, room_id, message}

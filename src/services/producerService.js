@@ -139,7 +139,13 @@ async function addTrackFromOtherUsers(id,room_id)
             if (producers[p] != null && producers[p].stream!=null && p!=id) {
                 for(var tr of producers[p].stream.getTracks())
                 {
+                   try
+                   {
                     producers[id].peer.addTrack(tr, producers[p].stream)
+                   }catch(e2)
+                   {
+                    console.log(e2)
+                   }
                 }
             }
         }
@@ -160,14 +166,16 @@ async function sdpProcess(producer_id, sdp,room_id, use_sdp_transform) {
     try {
         var newsdp
         console.log("use_sdp_transform");
-        console.log(use_sdp_transform);
-        if (use_sdp_transform) {
-            newsdp = await utils.sdpFromJsonString(sdp)
-        } else {
-            newsdp = sdp
-        }
-        const desc = new webrtc.RTCSessionDescription(newsdp);
-        await producers[producer_id].peer.setRemoteDescription(desc);    
+        // console.log(use_sdp_transform);
+        // if (use_sdp_transform) {
+        //     newsdp = await utils.sdpFromJsonString(sdp)
+        // } else {
+        //     newsdp = sdp
+        // }
+        // const desc = new webrtc.RTCSessionDescription(newsdp);
+        // await producers[producer_id].peer.setRemoteDescription(desc);    
+
+        await handleRemoteSdp(producer_id,sdp)
 
         await addTrackFromOtherUsers(producer_id,room_id)
 
@@ -286,6 +294,7 @@ async function notify(room_id, producer_id, type, message = '', ) {
         if(type == "join")
         {
             _producers = await getProducersFromRoomToArray(room_id)
+            addOtherToMe(producer_id)
         }
         if(type == "leave")
         {
@@ -319,6 +328,11 @@ async function notify(room_id, producer_id, type, message = '', ) {
                 {
                     // except self
                     if (p != producer_id) {
+                        if(type=="join")
+                        {
+                            addMeToOtherUser(producer_id,p)
+                        }
+
                         socketfunction.producerEventNotify(producers[p].socket_id, data)
                     }
                 }
@@ -519,18 +533,18 @@ function getProducersFromRoomToArray(room_id, producer_id_except = null) {
  * 
  * @param {String} id producer id 
  */
-async function addTrack(producer_id, producer_id_target)
+async function addTrack(from_producer_id, to_producer_id)
 {
     try{
 
-        if(producers[producer_id] == null || producers[producer_id_target] == null && producers[producer_id_target].stream!=null)
+        if(producers[to_producer_id] == null || producers[from_producer_id] == null && producers[from_producer_id].stream!=null)
         {
             return;
         }
-        for(var tr of producers[producer_id_target].stream.getTracks())
+        for(var tr of producers[from_producer_id].stream.getTracks())
         {
-            console.log("add track from "+producer_id_target+" to "+producer_id)
-            producers[producer_id].peer.addTrack(tr, producers[producer_id_target].stream)
+            console.log("add track from "+from_producer_id+" to "+to_producer_id)
+            producers[to_producer_id].peer.addTrack(tr, producers[from_producer_id].stream)
         }
     }catch(e)
     {
@@ -591,40 +605,50 @@ async function removeAllTrack(producer_id)
  * @param {*} type => join | leave
  * @returns 
  */
-async function renegotiation(producer_id, sdp, producer_id_target,type="join")
+async function addMeToOtherUser(current_producer_id, target_producer_id)
 {
     try
     {
-        console.log("producer id: "+producer_id)
-        console.log("producer_id_target: "+producer_id_target)
-        console.log("type: "+type)
+            console.log("current_producer_id id: "+current_producer_id)
+            console.log("target_producer_id: "+target_producer_id)
+            // console.log("type: "+type)
 
-        
-                
+            await addTrack(current_producer_id,target_producer_id)
+
+            const offer = await producers[target_producer_id].peer.createOffer({ 'offerToReceiveVideo': 1 });
+            await producers[target_producer_id].peer.setLocalDescription(offer);
+            var localDesc = await producers[target_producer_id].peer.localDescription
+            var localSdp = await utils.sdpToJsonString(localDesc)
+            
+            var data = {
+                "producer_id": target_producer_id,
+                "sdp": localSdp
+            }
+            
+            socketfunction.newUserJoin(producers[target_producer_id].socket_id,data)
       
-        var newsdp = await utils.sdpFromJsonString(sdp)
-        const desc = new webrtc.RTCSessionDescription(newsdp);
-        await producers[producer_id].peer.setRemoteDescription(desc);    
+        // var newsdp = await utils.sdpFromJsonString(sdp)
+        // const desc = new webrtc.RTCSessionDescription(newsdp);
+        // await producers[producer_id].peer.setRemoteDescription(desc);    
 
 
-        if(type=="join")
-        {
-            await addTrack(producer_id,producer_id_target)
-        }
-        if(type=="leave")
-        {
-            await removeAllTrack(producer_id)
-            await addAllTrack(producer_id,producer_id_target)
-        }
+        // if(type=="join")
+        // {
+            
+            
+        // }
+        // if(type=="leave")
+        // {
+        //     await removeAllTrack(producer_id)
+        //     await addAllTrack(producer_id,producer_id_target)
+        // }
 
-        const answer = await producers[producer_id].peer.createAnswer({ 'offerToReceiveVideo': 1,
-    'offerToReceiveAudio':1
-    })
-        // const answer = await producers[producer_id].peer.createAnswer();
-        await producers[producer_id].peer.setLocalDescription(answer);
-        var localDesc = await producers[producer_id].peer.localDescription
-        var localsdp = await utils.sdpToJsonString(localDesc)
-        return localsdp;
+        // const answer = await producers[producer_id].peer.createAnswer({ 'offerToReceiveVideo': 1})
+        // // const answer = await producers[producer_id].peer.createAnswer();
+        // await producers[producer_id].peer.setLocalDescription(answer);
+        // var localDesc = await producers[producer_id].peer.localDescription
+        // var localsdp = await utils.sdpToJsonString(localDesc)
+        // return localsdp;
     }
     catch(e)
     {
@@ -632,6 +656,48 @@ async function renegotiation(producer_id, sdp, producer_id_target,type="join")
         console.log("\x1b[31m", "ERROR................", "\x1b[0m");
     }
     return null
+}
+
+async function addOtherToMe(current_producer_id)
+{
+    try{
+        console.log("add others to me ")
+        console.log("current_producer_id : "+ current_producer_id)
+       
+        await addTrackFromOtherUsers(current_producer_id,producers[current_producer_id].room_id)
+
+        const offer = await producers[current_producer_id].peer.createOffer({ 'offerToReceiveVideo': 1 });
+        await producers[current_producer_id].peer.setLocalDescription(offer);
+        var localDesc = await producers[current_producer_id].peer.localDescription
+        var localSdp = await utils.sdpToJsonString(localDesc)
+        
+        var data = {
+            "producer_id": current_producer_id,
+            "sdp": localSdp
+        }
+        
+        socketfunction.newUserJoin(producers[current_producer_id].socket_id,data)
+  
+    }
+    catch(e)
+    {
+        console.log(e)
+        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
+    }
+}
+
+async function handleRemoteSdp(producer_id,sdp)
+{
+    try
+    {
+        var newsdp = await utils.sdpFromJsonString(sdp)
+        const desc = new webrtc.RTCSessionDescription(newsdp);
+        await producers[producer_id].peer.setRemoteDescription(desc);   
+    } catch(e)
+    {
+        console.log(e)
+        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
+    }
 }
 
 
@@ -645,5 +711,5 @@ module.exports = {
     removeWhenDisconectedFromSocket,
     endCall,
 
-    renegotiation
+    handleRemoteSdp
 }

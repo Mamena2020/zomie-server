@@ -37,6 +37,13 @@ function consumerSdpFromServer(socket_id, data) {
     io.to(socket_id).emit("consumer-sdp-from-server", data)
 }
 
+
+function newUserJoin(socket_id,data)
+{
+    console.log("newUserJoin")
+    io.to(socket_id).emit("new-user-join-from-server", data)
+}
+
 /**
  * 
  * @param {String} socket_id 
@@ -68,5 +75,6 @@ module.exports =  {
     getSocketById,
     consumerSdpFromServer,
     consumerCandidateToClient,
-    consumerUpdateClientStream
+    consumerUpdateClientStream,
+    newUserJoin
 }

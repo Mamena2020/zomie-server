@@ -21,10 +21,6 @@ const sdpTransform = require('sdp-transform');
  * @return {String} json string 
  */
 async function sdpToJsonString(sdp) {
-    console.log("sdp to json string")
-        // console.log(sdp)
-
-
     var session = sdpTransform.parse(String(sdp.sdp))
     var data = {
         type: sdp.type,

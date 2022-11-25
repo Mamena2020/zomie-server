@@ -51,10 +51,12 @@ this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a
 
 - WebRTC
   - Articles
+    - https://www.w3.org/2011/04/webrtc/wiki/images/6/63/WebRTC_RTCSender-Receiver.pdf
     - https://medium.com/securemeeting/webrtc-architecture-basics-p2p-sfu-mcu-and-hybrid-approaches-6e7d77a46a66
     - https://bloggeek.me/webrtc-rtcpeerconnection-one-per-stream/
     - consumer listen to producer media have to before set offer local sdp 
     - https://www.rtcmulticonnection.org/docs/removeStream/
+    - https://webrtc.org/getting-started/unified-plan-transition-guide
   - Videos - Topologies
     - https://www.youtube.com/watch?v=N1yj6gI2CTE&ab_channel=EngineeringSemester
     - https://www.youtube.com/watch?v=d2N0d6CKrbk&ab_channel=TsahiLevent-Levi

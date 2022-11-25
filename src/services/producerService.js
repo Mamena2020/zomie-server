@@ -86,13 +86,18 @@ class Producer {
     producers[producer_id] = producer
     producers[producer_id].peer.addTransceiver("video", { direction: "sendrecv" })
     producers[producer_id].peer.addTransceiver("audio", { direction: "sendrecv" })
+
+
     producers[producer_id].peer.onnegotiationneeded = (e) => {
         console.log("\x1b[34m", "producers: onnegotiationneeded " + producers[producer_id].name, "\x1b[0m")
     }
 
+
+
     setMediaStream(producer_id)
         // --------------------------------- process offer answer sdp
-    await sdpProcess(producer_id, sdp, use_sdp_transform)
+   
+    await sdpProcess(producer_id, sdp,room_id,  use_sdp_transform)
     onIceConnectionStateChange(producer_id)
         // --------------------------------- send ice candidate to client
     onIceCandidate(producer_id)
@@ -109,10 +114,38 @@ class Producer {
  */
 async function setMediaStream(id) {
     try {
-        producers[id].peer.ontrack = (e) =>
-            producers[id].stream = e.streams[0];
+        // producers[id].peer.ontrack = function(e) {
+        //     if(producers[id].stream==null)
+        //     {
+        //         console.log("on Track when join")
+        //         producers[id].stream = e.streams[0];
+        //     }
+        // }
+        producers[id].peer.ontrack = (e)=> 
+                producers[id].stream = e.streams[0];
+        
+        
     } catch (e) {
         console.log(e);
+        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
+    }
+}
+
+async function addTrackFromOtherUsers(id,room_id)
+{
+    try
+    {   
+        for (let p in rooms[room_id].producers) {
+            if (producers[p] != null && producers[p].stream!=null && p!=id) {
+                for(var tr of producers[p].stream.getTracks())
+                {
+                    producers[id].peer.addTrack(tr, producers[p].stream)
+                }
+            }
+        }
+    }catch(e)
+    {
+        console.log(e)
         console.log("\x1b[31m", "ERROR................", "\x1b[0m");
     }
 }
@@ -123,7 +156,7 @@ async function setMediaStream(id) {
  * @param  sdp sdp offer from client in json
  * @return sdp answer
  */
-async function sdpProcess(id, sdp, use_sdp_transform) {
+async function sdpProcess(producer_id, sdp,room_id, use_sdp_transform) {
     try {
         var newsdp
         console.log("use_sdp_transform");
@@ -134,10 +167,13 @@ async function sdpProcess(id, sdp, use_sdp_transform) {
             newsdp = sdp
         }
         const desc = new webrtc.RTCSessionDescription(newsdp);
-        await producers[id].peer.setRemoteDescription(desc);
-        // const answer = await producers[id].peer.createAnswer({ 'offerToReceiveVideo': 1 });
-        const answer = await producers[id].peer.createAnswer({ 'offerToReceiveVideo': 1 });
-        await producers[id].peer.setLocalDescription(answer);
+        await producers[producer_id].peer.setRemoteDescription(desc);    
+
+        await addTrackFromOtherUsers(producer_id,room_id)
+
+        const answer = await producers[producer_id].peer.createAnswer({ 'offerToReceiveVideo': 1,'offerToReceiveAudio':1});
+        // const answer = await producers[producer_id].peer.createAnswer();
+        await producers[producer_id].peer.setLocalDescription(answer);
     } catch (e) {
         console.log(e);
         console.log("\x1b[31m", "ERROR................", "\x1b[0m");
@@ -275,10 +311,12 @@ async function notify(room_id, producer_id, type, message = '', ) {
 
         for (let p in rooms[room_id].producers) {
             if (producers[p] != null) {
-                if (type == "join" || type == "leave") {
-                    // send to all in the room
-                    socketfunction.producerEventNotify(producers[p].socket_id, data)
-                } else {
+                // if (type == "join" || type == "leave") {
+                // if (type == "leave") {
+                //     // send to all in the room
+                //     socketfunction.producerEventNotify(producers[p].socket_id, data)
+                // } else 
+                {
                     // except self
                     if (p != producer_id) {
                         socketfunction.producerEventNotify(producers[p].socket_id, data)
@@ -413,13 +451,6 @@ async function removeWhenDisconectedFromSocket(socket_id) {
 
 
 
-// ================================================================================================ 
-// ================================================================================================ consumer functions
-// ================================================================================================ 
-
-
-
-
 async function endCall(room_id, producer_id) {
     if (rooms[room_id] != null && producers[producer_id] != null) {
         await notify(room_id, producer_id, "leave")
@@ -484,6 +515,124 @@ function getProducersFromRoomToArray(room_id, producer_id_except = null) {
 }
 
 
+/**
+ * 
+ * @param {String} id producer id 
+ */
+async function addTrack(producer_id, producer_id_target)
+{
+    try{
+
+        if(producers[producer_id] == null || producers[producer_id_target] == null && producers[producer_id_target].stream!=null)
+        {
+            return;
+        }
+        for(var tr of producers[producer_id_target].stream.getTracks())
+        {
+            console.log("add track from "+producer_id_target+" to "+producer_id)
+            producers[producer_id].peer.addTrack(tr, producers[producer_id_target].stream)
+        }
+    }catch(e)
+    {
+        console.log(e)
+        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
+    }
+}
+async function addAllTrack(producer_id)
+{
+    try{
+
+        var room_id= producers[producer_id].room_id    
+
+        if(producers[producer_id] == null && rooms[room_id] == null)
+        {
+            return;
+        }
+        await addTrackFromOtherUsers(producer_id,room_id)
+    }catch(e)
+    {
+        console.log(e)
+        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
+    }
+}
+
+
+
+
+async function removeAllTrack(producer_id)
+{
+    try{
+        if(producers[producer_id] == null )
+        {
+            return;
+        }
+        console.log("remove all track")
+
+        // var d = new webrtc.RTCPeerConnection();
+        // d.getSenders
+        var _sender =  producers[producer_id].peer.getSenders();
+        for(var tr of _sender)
+        {
+            producers[producer_id].peer.removeTrack(tr)
+        }
+    }catch(e)
+    {
+        console.log(e)
+        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
+    }
+}
+
+
+/**
+ * 
+ * @param {*} producer_id 
+ * @param {*} sdp 
+ * @param {*} producer_id_target 
+ * @param {*} type => join | leave
+ * @returns 
+ */
+async function renegotiation(producer_id, sdp, producer_id_target,type="join")
+{
+    try
+    {
+        console.log("producer id: "+producer_id)
+        console.log("producer_id_target: "+producer_id_target)
+        console.log("type: "+type)
+
+        
+                
+      
+        var newsdp = await utils.sdpFromJsonString(sdp)
+        const desc = new webrtc.RTCSessionDescription(newsdp);
+        await producers[producer_id].peer.setRemoteDescription(desc);    
+
+
+        if(type=="join")
+        {
+            await addTrack(producer_id,producer_id_target)
+        }
+        if(type=="leave")
+        {
+            await removeAllTrack(producer_id)
+            await addAllTrack(producer_id,producer_id_target)
+        }
+
+        const answer = await producers[producer_id].peer.createAnswer({ 'offerToReceiveVideo': 1,
+    'offerToReceiveAudio':1
+    })
+        // const answer = await producers[producer_id].peer.createAnswer();
+        await producers[producer_id].peer.setLocalDescription(answer);
+        var localDesc = await producers[producer_id].peer.localDescription
+        var localsdp = await utils.sdpToJsonString(localDesc)
+        return localsdp;
+    }
+    catch(e)
+    {
+        console.log(e)
+        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
+    }
+    return null
+}
 
 
 module.exports = {
@@ -494,5 +643,7 @@ module.exports = {
     notify,
     updateData,
     removeWhenDisconectedFromSocket,
-    endCall
+    endCall,
+
+    renegotiation
 }

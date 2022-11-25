@@ -1,9 +1,11 @@
 const roomController = require("../controller/roomController")
+const producerController = require("../controller/producerController")
 
 module.exports =(app)=> {
     app.post("/create-room",roomController.create)
     app.post("/check-room", roomController.check)
     app.post("/join-room",roomController.join)
     app.get("/get-rooms",roomController.gets)
-    app.get("/get-room",roomController.getRoom)
+    app.get("/get-room",roomController.get)
+    app.post("/renegotiation",producerController.renegotiation)
 }

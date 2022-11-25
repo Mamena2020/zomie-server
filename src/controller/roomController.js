@@ -11,7 +11,7 @@ const socketfunction = require("../socket/socketfunction")
  * string id (required)
  * @return json
  */
-async function getRoom(req,res)
+async function get(req,res)
 {   
     var id = req.query.id;
     return roomService.get(id,res)
@@ -171,17 +171,18 @@ async function join({ body }, res) {
             "message": "success join",
             "data": {
                 sdp: newsdp,
-                room_id: producers[producer_id].room_id,
+                room_id:room_id,
                 producer_id: producers[producer_id].id,
                 user_id: producers[producer_id].user_id,
                 user_name: producers[producer_id].name,
+                producers : producerService.getProducersFromRoomToArray(room_id) 
             }
         }
 
-        await producerService.notify(
-            room_id,
-            producer_id,
-            "join")
+        // await producerService.notify(
+        //     room_id,
+        //     producer_id,
+        //     "join")
 
     } catch (e) {
         statusCode = 409
@@ -214,6 +215,7 @@ async function gets(req, res)  {
             "id": producers[p].id,
             "name": producers[p].name,
             "socket_id": producers[p].socket_id,
+            "stream_id": producers[p].stream!=null?producers[p].stream.id:'-',
         })
     }
     res.json({
@@ -230,5 +232,5 @@ module.exports = {
     create,
     join,
     gets,
-    getRoom,
+    get,
 }

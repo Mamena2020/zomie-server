@@ -28,12 +28,14 @@ async function update(producer_id) {
 async function removeOldTrack(producer_id)
 {
     try {
-        if(producers[producer_id].peerConsumer!=null)
+        if(producers[producer_id].peerConsumer!=null && producers[producer_id].peerConsumer!= undefined)
         {
                // remove track
-                if( producers[producer_id].peerConsumer.getSenders()!=undefined && producers[producer_id].peerConsumer.getSenders()!=null )
+                var _senders = await producers[producer_id].peerConsumer.getSenders()
+                if(_senders!=undefined && _senders!=null )
                 {
-                    for (let _sender of producers[producer_id].peerConsumer.getSenders()) {
+                    for (let _sender of _senders ) {
+                         console.log("remove old track- user id: "+ producers[producer_id].name)
                          producers[producer_id].peerConsumer.removeTrack(_sender);
                     }
                 }
@@ -41,6 +43,9 @@ async function removeOldTrack(producer_id)
         else
         {
             producers[producer_id].peerConsumer = new webrtc.RTCPeerConnection(config.configurationPeerConnection, config.offerSdpConstraints)
+        
+            producers[producer_id].peerConsumer.addTransceiver("video", { direction: "sendrecv" })
+            producers[producer_id].peerConsumer.addTransceiver("audio", { direction: "sendrecv" })
         }
     } catch (e) {
         console.log(e);
@@ -53,12 +58,11 @@ async function addNewTrack(producer_id, room_id)
     try {
         for (let id in rooms[room_id].producers) {
             if (producers[id] != null && id != producer_id && producers[id].stream!=null) {
-                console.log("\x1b[33m", "ADD CONSUMER TRACK for: "+producer_id, "\x1b[0m");
-                  // ---------------------------------------------------------- add new track from other users in the room 
+                   console.log("\x1b[33m", "ADD CONSUMER TRACK for: "+producer_id, "\x1b[0m");
+                   // ---------------------------------------------------------- add new track from other users in the room 
                     for (let track of producers[id].stream.getTracks()) {
                          producers[producer_id].peerConsumer.addTrack(track, producers[id].stream)
-                    }
-                  
+                    }     
             }
         }
     } catch (e) {
@@ -69,7 +73,7 @@ async function addNewTrack(producer_id, room_id)
 
 async function consmerRenegotiation(producer_id) {
     try {
-        const offer = await producers[producer_id].peerConsumer.createOffer({ 'offerToReceiveVideo': true });
+        const offer = await producers[producer_id].peerConsumer.createOffer({ 'offerToReceiveVideo': 1 });
         await producers[producer_id].peerConsumer.setLocalDescription(offer);
         var localDesc = await producers[producer_id].peerConsumer.localDescription
         var sdp = await utils.sdpToJsonString(localDesc)

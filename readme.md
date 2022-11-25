@@ -1,8 +1,8 @@
 # Zomie - media server
+:heavy_exclamation_mark: the project continues on branch 1peer :heavy_exclamation_mark:
 
 Media server for <a href="https://github.com/Mamena2020/zomie-app"> zomie app</a>. 
-Server running on nodejs. Each client will have 2 active peer, 1 for broadcasting &
-1 as consumer for listen to all user in the room. 
+Server running on nodejs. Each client will have 1 active peer to handle broadcasting as well as a consumer, 
 this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">Socket.io</a> for signaling & messaging.
 
 

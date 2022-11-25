@@ -164,21 +164,9 @@ async function addTrackFromOtherUsers(id,room_id)
  */
 async function sdpProcess(producer_id, sdp,room_id, use_sdp_transform) {
     try {
-        var newsdp
-        console.log("use_sdp_transform");
-        // console.log(use_sdp_transform);
-        // if (use_sdp_transform) {
-        //     newsdp = await utils.sdpFromJsonString(sdp)
-        // } else {
-        //     newsdp = sdp
-        // }
-        // const desc = new webrtc.RTCSessionDescription(newsdp);
-        // await producers[producer_id].peer.setRemoteDescription(desc);    
 
         await handleRemoteSdp(producer_id,sdp)
-
-        await addTrackFromOtherUsers(producer_id,room_id)
-
+        // await addTrackFromOtherUsers(producer_id,room_id)
         const answer = await producers[producer_id].peer.createAnswer({ 'offerToReceiveVideo': 1,'offerToReceiveAudio':1});
         // const answer = await producers[producer_id].peer.createAnswer();
         await producers[producer_id].peer.setLocalDescription(answer);
@@ -294,7 +282,7 @@ async function notify(room_id, producer_id, type, message = '', ) {
         if(type == "join")
         {
             _producers = await getProducersFromRoomToArray(room_id)
-            addOtherToMe(producer_id)
+            addOtherUsersToMe(producer_id)
         }
         if(type == "leave")
         {
@@ -319,23 +307,13 @@ async function notify(room_id, producer_id, type, message = '', ) {
         console.log(data)
 
         for (let p in rooms[room_id].producers) {
-            if (producers[p] != null) {
-                // if (type == "join" || type == "leave") {
-                // if (type == "leave") {
-                //     // send to all in the room
-                //     socketfunction.producerEventNotify(producers[p].socket_id, data)
-                // } else 
+            if (producers[p] != null && p != producer_id) {
+               // except self
+                if(type=="join")
                 {
-                    // except self
-                    if (p != producer_id) {
-                        if(type=="join")
-                        {
-                            addMeToOtherUser(producer_id,p)
-                        }
-
-                        socketfunction.producerEventNotify(producers[p].socket_id, data)
-                    }
+                    addMeToOtherUser(producer_id,p)
                 }
+                socketfunction.producerEventNotify(producers[p].socket_id, data)
             }
         }
     } catch (e) {
@@ -552,24 +530,6 @@ async function addTrack(from_producer_id, to_producer_id)
         console.log("\x1b[31m", "ERROR................", "\x1b[0m");
     }
 }
-async function addAllTrack(producer_id)
-{
-    try{
-
-        var room_id= producers[producer_id].room_id    
-
-        if(producers[producer_id] == null && rooms[room_id] == null)
-        {
-            return;
-        }
-        await addTrackFromOtherUsers(producer_id,room_id)
-    }catch(e)
-    {
-        console.log(e)
-        console.log("\x1b[31m", "ERROR................", "\x1b[0m");
-    }
-}
-
 
 
 
@@ -658,7 +618,7 @@ async function addMeToOtherUser(current_producer_id, target_producer_id)
     return null
 }
 
-async function addOtherToMe(current_producer_id)
+async function addOtherUsersToMe(current_producer_id)
 {
     try{
         console.log("add others to me ")
@@ -692,7 +652,15 @@ async function handleRemoteSdp(producer_id,sdp)
     {
         var newsdp = await utils.sdpFromJsonString(sdp)
         const desc = new webrtc.RTCSessionDescription(newsdp);
-        await producers[producer_id].peer.setRemoteDescription(desc);   
+        await producers[producer_id].peer.setRemoteDescription(desc); 
+
+        var _producers = await getProducersFromRoomToArray(producers[producer_id].room_id)
+        socketfunction.updateConsumers(producers[producer_id].socket_id,
+            {
+                "producer_id": producer_id,
+                "producers":_producers
+            }
+            )    
     } catch(e)
     {
         console.log(e)

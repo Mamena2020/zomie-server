@@ -1,5 +1,4 @@
 const producerService = require('../services/producerService')
-const consumerService = require("../services/consumerService")
 
 
 module.exports = (io)=>{
@@ -16,26 +15,6 @@ io.on('connection', async function(socket) {
    
     socket.on("update-data", function(data) {
         producerService.updateData(data);
-    })
-
-    // 1
-    /**
-     * @param {Map} data {
-     * producer_id
-     * }
-     */
-    socket.on("consumer-update", function(data) {
-        consumerService.update(data["producer_id"])
-    })
-    // 2
-    /**
-     * @param {Map} data{
-     * producer_id,
-     * sdp -> answer
-     * }
-     */
-    socket.on("consumer-sdp", function(data) {
-        consumerService.sdpProcess(data['producer_id'], data["sdp"]);
     })
 
     socket.on("negotiation-sdp", function(data) {

@@ -5,7 +5,7 @@ const port = process.env.PORT
 const express = require('express')
 const cors = require('cors');
 const bodyParser = require('body-parser')
-
+const path = require('path');
 const app = express()
 const server = require('http').Server(app) // running express on http
 const io = require('socket.io')(server) // running socket.io on  http

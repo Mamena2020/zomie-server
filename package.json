@@ -17,6 +17,7 @@
         "express": "^4.18.2",
         "node-pre-gyp": "^0.17.0",
         "nodemon": "^2.0.20",
+        "path": "^0.12.7",
         "peer": "^0.2.10",
         "sdp-transform": "^2.14.1",
         "socket.io": "^4.5.3",

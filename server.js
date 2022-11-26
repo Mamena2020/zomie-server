@@ -14,7 +14,8 @@ const io = require('socket.io')(server) // running socket.io on  http
 // middleware policy,  allow all origin to access this server 
 app.use(cors())
 // make dir public as access to public
-app.use(express.static('public/web'));
+// app.use(express.static('public/web'));
+app.use(express.static(path.join(__dirname, 'public/web')));
 // support parsing of application/json type post data
 app.use(bodyParser.json());
 //support parsing of application/x-www-form-urlencoded post data

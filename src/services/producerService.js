@@ -107,20 +107,12 @@ class Producer {
  */
 async function setMediaStream(producer_id) {
     try {
-        // producers[producer_id].peer.ontrack = (e)=> 
-        //         producers[producer_id].stream = e.streams[0];
         producers[producer_id].peer.ontrack = (e)=> 
         {
-            // if(producers[producer_id].type=="screen" && producers[producer_id].stream==null){
-            //     console.log("\x1b[46m", "Add Stream on Track1 for : "+producer_id, "\x1b[0m");
-            //     producers[producer_id].stream = e.streams[0];
-                
-            // }
-            // if(producers[producer_id].type=="user")
-            // if(producers[producer_id].type=="user")
+           
             if(e.streams.length>0)
             {
-                console.log("\x1b[46m", "Add Stream on Track2 for : "+producer_id, "\x1b[0m");
+                console.log("\x1b[46m", "Add Stream on Track for : "+producer_id, "\x1b[0m");
                 producers[producer_id].stream = e.streams[0];
             }
         }

@@ -6,8 +6,8 @@ var io = null
  * @param {object} data ice candidate from server to client
  * @return void
  */
- function producerCandidateToClient(socket_id, data) {
-    io.to(socket_id).emit("producer-candidate-from-server", data)
+ function candidateToClient(socket_id, data) {
+    io.to(socket_id).emit("candidate-to-client", data)
 }
 
 
@@ -18,15 +18,15 @@ var io = null
  *   
  */
 
-function producerEventNotify(socket_id, data) {
-    console.log("notify " + data["type"])
-    io.to(socket_id).emit("producer-event", data)
+function notify(socket_id, data) {
+    console.log("notify from server" + data["type"])
+    io.to(socket_id).emit("notify-from-server", data)
 }
 
-function newUserJoin(socket_id,data)
+function sdpFromServer(socket_id,data)
 {
-    console.log("newUserJoin")
-    io.to(socket_id).emit("new-user-join-from-server", data)
+    console.log("sdpFromServer")
+    io.to(socket_id).emit("sdp-from-server", data)
 }
 
 
@@ -49,9 +49,9 @@ function init(sio)
 
 module.exports =  {
     init,
-    producerCandidateToClient,
-    producerEventNotify,
+    candidateToClient,
+    notify,
     getSocketById,
-    newUserJoin,
+    sdpFromServer,
     updateConsumers
 }

@@ -9,7 +9,7 @@ io.on('connection', async function(socket) {
     console.log("new connection: " + socket.id);
     
 
-    socket.on("producer-candidate-from-client", function(data) {
+    socket.on("candidate-to-server", function(data) {
         producerService.addCandidate(data['producer_id'], data['candidate']);
     })
    
@@ -17,14 +17,14 @@ io.on('connection', async function(socket) {
         producerService.updateData(data);
     })
 
-    socket.on("negotiation-sdp", function(data) {
+    socket.on("sdp-to-server", function(data) {
         producerService.handleRemoteSdp(data['producer_id'], data["sdp"]);
     })
     // ---------------------------------------------------------
     /**
      * @param {Map} data {producer_id, room_id, message}
      */
-    socket.on("notify-server", function(data) {
+    socket.on("notify-to-server", function(data) {
         producerService.notify(data["room_id"], data["producer_id"], data["type"], data["message"]??'')
     })
 
@@ -34,7 +34,7 @@ io.on('connection', async function(socket) {
     socket.on("end-call", function(data) {
         try {
             console.log("\x1b[35m", "END CALL --------------", "\x1b[0m");
-            producerService.endCall(data["room_id"], data["producer_id"])
+            producerService.endCall(data["room_id"], data["producer_id"], data["producer_id_screen"]??'')
         } catch (e) {
             console.log(e)
         }
@@ -42,6 +42,6 @@ io.on('connection', async function(socket) {
 
     socket.on('disconnect', () => {
         console.log("User disconnected: " + socket.id)
-        producerService.removeWhenDisconectedFromSocket(socket.id)
+        producerService.removeWhenDisconected(socket.id)
     })
 })}

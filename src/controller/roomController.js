@@ -129,10 +129,10 @@ async function join({ body }, res) {
             }
             throw "room not found"
         }
-        var use_sdp_transform = body.use_sdp_transform;
-        if ( use_sdp_transform == null || use_sdp_transform== undefined) {
-            use_sdp_transform = false
-        }
+        // var use_sdp_transform = body.use_sdp_transform;
+        // if ( use_sdp_transform == null || use_sdp_transform== undefined) {
+        //     use_sdp_transform = false
+        // }
 
         var socket = await socketfunction.getSocketById(body.socket_id)
         var producer_id = await producerService.create(
@@ -145,8 +145,7 @@ async function join({ body }, res) {
             body.has_audio,
             body.type,
             body.sdp,
-            body.platform,
-            use_sdp_transform
+            body.platform
         )
         let room_id = await producerService.addToRoom(body.room_id, producer_id)
         if (producers[producer_id] == null || room_id == null) {
@@ -160,12 +159,8 @@ async function join({ body }, res) {
         // --------------------------------- send back sdp to client
         // console.log("sdp local")
         var sdp = await producers[producer_id].peer.localDescription
-        var newsdp
-        if (use_sdp_transform) {
-            newsdp = await utils.sdpToJsonString(sdp)
-        } else {
-            newsdp = sdp
-        }
+        var    newsdp = await utils.sdpToJsonString(sdp)
+       
         statusCode = 200
         data = {
             "message": "success join",
@@ -175,15 +170,9 @@ async function join({ body }, res) {
                 producer_id: producers[producer_id].id,
                 user_id: producers[producer_id].user_id,
                 user_name: producers[producer_id].name,
-                producers : producerService.getProducersFromRoomToArray(room_id) 
+                producers : producerService.getProducersFromRoom(room_id) 
             }
         }
-
-        // await producerService.notify(
-        //     room_id,
-        //     producer_id,
-        //     "join")
-
     } catch (e) {
         statusCode = 409
         data = {
@@ -213,9 +202,14 @@ async function gets(req, res)  {
     for (var p in producers) {
         _producers.push({
             "id": producers[p].id,
+            "user_id": producers[p].user_id,
             "name": producers[p].name,
             "socket_id": producers[p].socket_id,
             "stream_id": producers[p].stream!=null?producers[p].stream.id:'-',
+            "has_video": producers[p].has_video,
+            "has_audio": producers[p].has_audio,
+            "platform": producers[p].platform,
+            "type": producers[p].type,
         })
     }
     res.json({

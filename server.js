@@ -6,6 +6,7 @@ const express = require('express')
 const cors = require('cors');
 const bodyParser = require('body-parser')
 const path = require('path');
+const cookieParser = require('cookie-parser');
 const app = express()
 const server = require('http').Server(app) // running express on http
 const io = require('socket.io')(server) // running socket.io on  http
@@ -16,6 +17,7 @@ app.use(cors())
 // make dir public as access to public
 // app.use(express.static('public/web'));
 app.use(express.static(path.join(__dirname, 'public/web')));
+app.use(cookieParser());
 // support parsing of application/json type post data
 app.use(bodyParser.json());
 //support parsing of application/x-www-form-urlencoded post data

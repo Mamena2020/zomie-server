@@ -1,13 +1,24 @@
 const { v4: uuidv4 } = require('uuid')
 const {rooms}  = require('../data')
+const utils = require('../utils')
 
 const timeIntervalMonitoringRoomInSec = process.env.ROOM_MONITOR_INTERVAL
 
 class Room {
-    constructor(id = null, password = null, life_time, producers = {}, monitor = function() {}) {
+    constructor(
+        id = null, 
+        password = null, 
+        life_time,  // int => minutes
+        life_time_date,  // date => date.now() + life_time 
+        video_bitrate=90,
+        screen_bitrate=250,
+        producers = {}, monitor = function() {}) {
         this.id = id
         this.password = password
         this.life_time = life_time
+        this.life_time_date = life_time_date
+        this.video_bitrate = video_bitrate
+        this.screen_bitrate = screen_bitrate
         this.producers = producers
         this.monitor = monitor
     }
@@ -17,13 +28,23 @@ class Room {
  * @return room id
  */
  async function create(
-    password, life_time
+    password, life_time, video_bitrate, screen_bitrate
 ) {
     var id = uuidv4().substring(0, 8)
+
+
+    var date = new Date(Date.now())
+    var life_time_date = utils.addMinutes(date, life_time)
+    
+
     var room = new Room(
         id,
         password,
-        life_time, {},
+        life_time,
+        life_time_date,
+        video_bitrate,
+        screen_bitrate,  
+        {},
         roomMonitor(id)
     )
     rooms[id] = room
@@ -70,10 +91,8 @@ class Room {
 function get(id,res)
 {
     var data = {
-        "id":id,
         "message": "room not found",
-        "participants": 0,
-        "password":false
+        "data": {}
     }
     var statusCode = 404
     try {
@@ -81,10 +100,16 @@ function get(id,res)
         if (rooms[id] != null) {
             statusCode = 200
             data = {
-                "id":id,
                 "message": "room found",
-                "participants": Object.keys(rooms[id].producers).length, 
-                "password": rooms[id].password!=null? true: false
+                "data":{
+                    "id":id,
+                    "participants": Object.keys(rooms[id].producers).length, 
+                    "password_required": rooms[id].password!=null? true: false,
+                    "life_time": rooms[id].life_time,
+                    "life_time_date": rooms[id].life_time_date,
+                    "video_bitrate": rooms[id].video_bitrate,
+                    "screen_bitrate": rooms[id].screen_bitrate,
+                }
             }
         }
         console.log(data)

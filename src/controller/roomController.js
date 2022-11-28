@@ -55,14 +55,21 @@ async function create({ body }, res) {
         if (password == undefined || password == null) {
             password = null
         }
-
-        var date = new Date(Date.now())
-        var life_time = utils.addMinutes(date, 1); // default 1 minutes
-        if (body.life_time != undefined || body.life_time != null) {
-            life_time = utils.addMinutes(date, body.life_time)
+        var video_bitrate = body.video_bitrate
+        if (video_bitrate == undefined || video_bitrate == null) {
+            video_bitrate = 90
+        }
+        var screen_bitrate = body.screen_bitrate
+        if (screen_bitrate == undefined || screen_bitrate == null) {
+            screen_bitrate = 250
         }
 
-        var id = await roomService.create(password, life_time)
+        var life_time = 1
+        if (body.life_time != undefined || body.life_time != null) {
+           life_time= body.life_time
+        }
+
+        var id = await roomService.create(password, life_time, video_bitrate,screen_bitrate)
         if (id == null || id == undefined) {
             throw "failed to create room"
         }
@@ -135,6 +142,17 @@ async function join({ body }, res) {
         // }
 
         var socket = await socketfunction.getSocketById(body.socket_id)
+
+        if(socket == null || socket == undefined)
+        {
+            statusCode = 403;
+            data = {
+                "message": "failed to join",
+                "data": {}
+            }
+            throw "failed to join"
+        }
+
         var producer_id = await producerService.create(
             socket.id,
             body.room_id,

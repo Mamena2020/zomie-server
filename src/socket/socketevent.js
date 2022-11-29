@@ -42,6 +42,6 @@ io.on('connection', async function(socket) {
 
     socket.on('disconnect', () => {
         console.log("User disconnected: " + socket.id)
-        producerService.removeWhenDisconected(socket.id)
+        producerService.removeWhenDisconectedBySocket(socket.id)
     })
 })}

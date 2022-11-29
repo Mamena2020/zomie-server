@@ -295,9 +295,9 @@ async function notify(room_id, producer_id, type, message = '', ) {
         }
         console.log(data)
         for (let producer_id_target in rooms[room_id].producers) {
-            if (producers[producer_id_target] != null && producer_id_target != producer_id 
-                && producers[producer_id_target].type == "user"
-                ){
+            if (producers[producer_id_target] != null 
+                && producer_id_target != producer_id 
+                && producers[producer_id_target].type == "user"){
                     // except self
                     if(type=="join" )
                     {

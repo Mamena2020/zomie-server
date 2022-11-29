@@ -177,7 +177,7 @@ async function onIceConnectionStateChange(id) {
                 const connectionStatus2 = producers[id].peer.iceConnectionState;
                 if (["disconnected", "failed", "closed"].includes(connectionStatus2)) {
                     console.log("\x1b[31m", "producers: " + producers[id].id + " - " + connectionStatus2, "\x1b[0m")
-                    // endCall(producers[id].room_id, id)
+                    removeWhenDisconectedByID(id)
                 }
                 if (["connected"].includes(connectionStatus2)) {
                     console.log("\x1b[34m", "producers: " + producers[id].id + " - " + connectionStatus2, "\x1b[0m")
@@ -423,10 +423,19 @@ async function removeBySocketId(socket_id) {
 
 
 // will remove producer after 10 seconds of disconected
-async function removeWhenDisconected(socket_id) {
+async function removeWhenDisconectedBySocket(socket_id) {
     setTimeout(async() => {
         await removeBySocketId(socket_id)
-    }, 5000); // 5 second after disconected will remove producer by socket id
+    }, 6000); // 5 second after disconected will remove producer by socket id
+}
+// will remove producer after 10 seconds of disconected
+async function removeWhenDisconectedByID(id) {
+    setTimeout(async() => {
+        if(producers[id]!=null)
+        {
+            await endCall(producers[id].room_id, id) ; 
+        }
+    }, 6000); // 5 second after disconected will remove producer by socket id
 }
 
 
@@ -631,7 +640,7 @@ module.exports = {
     getProducersFromRoom,
     notify,
     updateData,
-    removeWhenDisconected,
+    removeWhenDisconectedBySocket,
     endCall,
     handleRemoteSdp
 }

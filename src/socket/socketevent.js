@@ -34,7 +34,7 @@ io.on('connection', async function(socket) {
     socket.on("end-call", function(data) {
         try {
             console.log("\x1b[35m", "END CALL --------------", "\x1b[0m");
-            producerService.endCall(data["room_id"], data["producer_id"], data["producer_id_screen"]??'')
+            producerService.endCall(data["room_id"], data["producer_id"],)
         } catch (e) {
             console.log(e)
         }

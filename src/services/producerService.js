@@ -108,11 +108,10 @@ class Producer {
 async function setMediaStream(producer_id) {
     try {
         producers[producer_id].peer.ontrack = (e)=> 
-        {
-           
+        {     
             if(e.streams.length>0)
             {
-                console.log("\x1b[46m", "Add Stream on Track for : "+producer_id, "\x1b[0m");
+                console.log("\x1b[46m", "Add Stream on Track2 for : "+producer_id, "\x1b[0m");
                 producers[producer_id].stream = e.streams[0];
             }
         }
@@ -267,9 +266,10 @@ async function notify(room_id, producer_id, type, message = '', ) {
 
         if(producers[producer_id]==null)
         return
-        
+         
+
         var _producers = []
-        if(type == "join")
+        if(type == "join" && producers[producer_id].type =="user")
         {
             addOtherUsersToMe(producer_id)
         }
@@ -286,6 +286,8 @@ async function notify(room_id, producer_id, type, message = '', ) {
                 "stream_id": producers[producer_id].stream!=null?producers[producer_id].stream.id:'',
                 "has_video": producers[producer_id].has_video,
                 "has_audio": producers[producer_id].has_audio,
+                "type": producers[producer_id].type,
+                "platform": producers[producer_id].platform,
             },
             "producers": _producers,
             "type": type,
@@ -293,13 +295,15 @@ async function notify(room_id, producer_id, type, message = '', ) {
         }
         console.log(data)
         for (let producer_id_target in rooms[room_id].producers) {
-            if (producers[producer_id_target] != null && producer_id_target != producer_id) {
-               // except self
-                if(type=="join" || type =="start_screen")
-                {
-                    addMeToOtherUser(producer_id,producer_id_target)
-                }
-                socketfunction.notify(producers[producer_id_target].socket_id, data)
+            if (producers[producer_id_target] != null 
+                && producer_id_target != producer_id 
+                && producers[producer_id_target].type == "user"){
+                    // except self
+                    if(type=="join" )
+                    {
+                        addMeToOtherUser(producer_id,producer_id_target)
+                    }
+                    socketfunction.notify(producers[producer_id_target].socket_id, data)
             }
         }
     } catch (e) {
@@ -427,11 +431,10 @@ async function removeWhenDisconected(socket_id) {
 
 
 
-async function endCall(room_id, producer_id, producer_id_screen) {
+async function endCall(room_id, producer_id) {
     if (rooms[room_id] != null && producers[producer_id] != null) {
-        await notify(room_id, producer_id_screen, "leave")
+       
         await notify(room_id, producer_id, "leave")
-        await remove(producer_id_screen)
         await remove(producer_id)
     }
 }
@@ -528,37 +531,10 @@ async function addTrack(from_producer_id, to_producer_id)
 }
 
 
-
-// async function removeAllTrack(producer_id)
-// {
-//     try{
-//         if(producers[producer_id] == null )
-//         {
-//             return;
-//         }
-//         console.log("remove all track")
-
-//         // var d = new webrtc.RTCPeerConnection();
-//         // d.getSenders
-//         var _sender =  producers[producer_id].peer.getSenders();
-//         for(var tr of _sender)
-//         {
-//             producers[producer_id].peer.removeTrack(tr)
-//         }
-//     }catch(e)
-//     {
-//         console.log(e)
-//         console.log("\x1b[31m", "ERROR................", "\x1b[0m");
-//     }
-// }
-
-
 /**
  * 
- * @param {*} producer_id 
- * @param {*} sdp 
- * @param {*} producer_id_target 
- * @param {*} type => join | leave
+ * @param {*} current_producer_id  
+ * @param {*} target_producer_id 
  * @returns 
  */
 async function addMeToOtherUser(current_producer_id, target_producer_id)

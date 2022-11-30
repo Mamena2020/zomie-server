@@ -25,7 +25,7 @@ const configurationPeerConnection = ()=>{
             iceServers: [
                 stun,
                 {
-                    'url': turnServerHost,
+                    'urls': turnServerHost,
                     'username': turnServerUsername,
                     'password': turnServerPassword,
                 },

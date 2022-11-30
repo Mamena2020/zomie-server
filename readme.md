@@ -5,6 +5,13 @@ Media server for <a href="https://github.com/Mamena2020/zomie-app"> zomie app</a
 Server running on nodejs. Each client will have 1 active peer to handle broadcasting as well as a consumer, 
 this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">Socket.io</a> for signaling & messaging.
 
+This server also using <a href="https://github.com/Mamena2020/zomie-turn-server"> TURN Server </a> as relays media,
+<a href="https://github.com/Mamena2020/zomie-turn-server"> TURN Server </a> work as a backup if STUN Server won't work because client device behind of symmetric NAT
+
+
+
+
+
 
 #WebRTC Architecture - SFU (Selective Forwarding Unit)
 
@@ -32,6 +39,7 @@ this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a
 - WebRTC
   - STUNT/TURN server
      - STUNT:  "urls": "stun:stun.stunprotocol.org"
+        - Stunt will not working if client is under symmetric NAT
      - :heavy_exclamation_mark: TURN: haven't used this yet, so. if the stun server fails to identify the client's address, then it can cause the connection to drop.
 
 - socket io
@@ -62,9 +70,10 @@ this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a
     - consumer listen to producer media have to before set offer local sdp 
     - https://www.rtcmulticonnection.org/docs/removeStream/
     - https://webrtc.org/getting-started/unified-plan-transition-guide
-  - Videos - Topologies
-    - https://www.youtube.com/watch?v=N1yj6gI2CTE&ab_channel=EngineeringSemester
-    - https://www.youtube.com/watch?v=d2N0d6CKrbk&ab_channel=TsahiLevent-Levi
+  - Videos 
+    - Topologies
+       - https://www.youtube.com/watch?v=N1yj6gI2CTE&ab_channel=EngineeringSemester
+       - https://www.youtube.com/watch?v=d2N0d6CKrbk&ab_channel=TsahiLevent-Levi
   - issues
     - https://stackoverflow.com/questions/53251527/webrtc-video-is-not-displaying
     - STUNT/TURN

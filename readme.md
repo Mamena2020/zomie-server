@@ -29,6 +29,11 @@ this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a
 
 # Note
 
+- WebRTC
+  - STUNT/TURN server
+     - STUNT:  "urls": "stun:stun.stunprotocol.org"
+     - :heavy_exclamation_mark: TURN: haven't used this yet, so. if the stun server fails to identify the client's address, then it can cause the connection to drop.
+
 - socket io
   -  version match info[1]
      - server(node js): "socket.io": "^2.4.1"
@@ -62,6 +67,8 @@ this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a
     - https://www.youtube.com/watch?v=d2N0d6CKrbk&ab_channel=TsahiLevent-Levi
   - issues
     - https://stackoverflow.com/questions/53251527/webrtc-video-is-not-displaying
+    - STUNT/TURN
+       - https://stackoverflow.com/questions/64446586/webrtc-iceconnectionstatechange-disconnected
 
 - Cors  
   - issues

@@ -23,7 +23,7 @@ const configurationPeerConnection = ()=>{
         return {
             sdpSemantics: "unified-plan",
             iceServers: [
-                stun,
+                // stun,
                 {
                     'urls': turnServerHost,
                     'username': turnServerUsername,

@@ -5,6 +5,13 @@ Media server for <a href="https://github.com/Mamena2020/zomie-app"> zomie app</a
 Server running on nodejs. Each client will have 1 active peer to handle broadcasting as well as a consumer, 
 this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">Socket.io</a> for signaling & messaging.
 
+This server also using <a href="https://github.com/Mamena2020/zomie-turn-server"> TURN Server </a> as relays media,
+<a href="https://github.com/Mamena2020/zomie-turn-server"> TURN Server </a> work as a backup if STUN Server won't work because client device behind of symmetric NAT
+
+
+
+
+
 
 #WebRTC Architecture - SFU (Selective Forwarding Unit)
 
@@ -16,6 +23,19 @@ this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a
 #how to use
   - config
     - create your .env from .env.example, & fill the credential
+    ```
+      # MEDIA SERVER CONFIG
+      HOST="localhost"
+      PORT=5000
+
+      ROOM_MONITOR_INTERVAL = 60000 # 1 minute  
+      # 1000 * 60
+
+      ALLOW_TURN_SERVER = "true"  # "true" or "false"
+      TURN_SERVER_HOST = "turn:ip:port" #example: "turn:192.168.1.9:3478"
+      TURN_SERVER_USERNAME = "zomie"
+      TURN_SERVER_PASSWORD = "password"
+    ```
   - install
     - npm install
   - dev
@@ -28,6 +48,12 @@ this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a
 
 
 # Note
+
+- WebRTC
+  - STUNT/TURN server
+     - STUNT:  "urls": "stun:stun.stunprotocol.org"
+        - Stunt will not working if client is under symmetric NAT. 
+     - TURN: <a href="https://github.com/Mamena2020/zomie-turn-server">Zomie TURN Server </a>
 
 - socket io
   -  version match info[1]
@@ -57,11 +83,14 @@ this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a
     - consumer listen to producer media have to before set offer local sdp 
     - https://www.rtcmulticonnection.org/docs/removeStream/
     - https://webrtc.org/getting-started/unified-plan-transition-guide
-  - Videos - Topologies
-    - https://www.youtube.com/watch?v=N1yj6gI2CTE&ab_channel=EngineeringSemester
-    - https://www.youtube.com/watch?v=d2N0d6CKrbk&ab_channel=TsahiLevent-Levi
+  - Videos 
+    - Topologies
+       - https://www.youtube.com/watch?v=N1yj6gI2CTE&ab_channel=EngineeringSemester
+       - https://www.youtube.com/watch?v=d2N0d6CKrbk&ab_channel=TsahiLevent-Levi
   - issues
     - https://stackoverflow.com/questions/53251527/webrtc-video-is-not-displaying
+    - STUNT/TURN
+       - https://stackoverflow.com/questions/64446586/webrtc-iceconnectionstatechange-disconnected
 
 - Cors  
   - issues

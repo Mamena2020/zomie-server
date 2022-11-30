@@ -23,6 +23,19 @@ This server also using <a href="https://github.com/Mamena2020/zomie-turn-server"
 #how to use
   - config
     - create your .env from .env.example, & fill the credential
+    ```
+      # MEDIA SERVER CONFIG
+      HOST="localhost"
+      PORT=5000
+
+      ROOM_MONITOR_INTERVAL = 60000 # 1 minute  
+      # 1000 * 60
+
+      ALLOW_TURN_SERVER = "true"  # "true" or "false"
+      TURN_SERVER_HOST = "turn:ip:port" #example: "turn:192.168.1.9:3478"
+      TURN_SERVER_USERNAME = "zomie"
+      TURN_SERVER_PASSWORD = "password"
+    ```
   - install
     - npm install
   - dev

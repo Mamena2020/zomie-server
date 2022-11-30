@@ -52,8 +52,8 @@ This server also using <a href="https://github.com/Mamena2020/zomie-turn-server"
 - WebRTC
   - STUNT/TURN server
      - STUNT:  "urls": "stun:stun.stunprotocol.org"
-        - Stunt will not working if client is under symmetric NAT
-     - :heavy_exclamation_mark: TURN: haven't used this yet, so. if the stun server fails to identify the client's address, then it can cause the connection to drop.
+        - Stunt will not working if client is under symmetric NAT. 
+     - TURN: <a href="https://github.com/Mamena2020/zomie-turn-server">Zomie TURN Server </a>
 
 - socket io
   -  version match info[1]

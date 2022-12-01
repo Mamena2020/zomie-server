@@ -20,16 +20,47 @@ const configurationPeerConnection = ()=>{
         var turnServerUsername = process.env.TURN_SERVER_USERNAME
         var turnServerPassword = process.env.TURN_SERVER_PASSWORD
 
+        var turn =  {
+                        'urls': turnServerHost,
+                        'username': turnServerUsername,
+                        'password': turnServerPassword,
+                    }
+
+        // return {
+        //     sdpSemantics: "unified-plan",
+        //     iceServers: [
+        //         stun,
+        //         {
+        //             'urls': turnServerHost,
+        //             'username': turnServerUsername,
+        //             'password': turnServerPassword,
+        //         },
+        
+        //     ]
+        // }
         return {
             sdpSemantics: "unified-plan",
             iceServers: [
-                // stun,
-                {
-                    'urls': turnServerHost,
-                    'username': turnServerUsername,
-                    'password': turnServerPassword,
-                },
-        
+                stun,
+                  {
+                    "urls": "stun:openrelay.metered.ca:80",
+                  },
+                  turn,
+                  {
+                    "urls": "turn:openrelay.metered.ca:80",
+                    "username": "openrelayproject",
+                    "credential": "openrelayproject",
+                  },
+                  {
+                    "urls": "turn:openrelay.metered.ca:443",
+                    "username": "openrelayproject",
+                    "credential": "openrelayproject",
+                  },
+                  {
+                    "urls": "turn:openrelay.metered.ca:443?transport=tcp",
+                    "username": "openrelayproject",
+                    "credential": "openrelayproject",
+                  },
             ]
         }
     }

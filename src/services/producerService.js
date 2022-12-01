@@ -174,6 +174,7 @@ async function onIceConnectionStateChange(id) {
     producers[id].peer.oniceconnectionstatechange = async(e) => {
         try {
             if (producers[id] != null) {
+                console.log("|oniceconnectionstatechange|:")
                 const connectionStatus2 = producers[id].peer.iceConnectionState;
                 if (["disconnected", "failed", "closed"].includes(connectionStatus2)) {
                     console.log("\x1b[31m", "producers: " + producers[id].id + " - " + connectionStatus2, "\x1b[0m")

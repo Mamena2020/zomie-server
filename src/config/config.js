@@ -11,6 +11,12 @@ const configurationPeerConnection = ()=>{
     var allowTurnServer = process.env.ALLOW_TURN_SERVER =="true"?true:false   
 
     var stun = {"urls": "stun:stun.stunprotocol.org"}
+    var stun2 = {"urls": "stun:openrelay.metered.ca:80",}
+
+    var iceServers = [];
+
+    iceServers.push(stun)
+    iceServers.push(stun2)
 
     if(allowTurnServer)
     {
@@ -20,48 +26,38 @@ const configurationPeerConnection = ()=>{
         var turnServerUsername = process.env.TURN_SERVER_USERNAME
         var turnServerPassword = process.env.TURN_SERVER_PASSWORD
 
-        var turn =  {
-                        'urls': turnServerHost,
-                        'username': turnServerUsername,
-                        'password': turnServerPassword,
-                    }
+        if(turnServerHost!="")
+        {
+            var turn =  {
+                            'urls': turnServerHost,
+                            'username': turnServerUsername,
+                            'password': turnServerPassword,
+                        }
+           iceServers.push(turn)
+        }
 
-        // return {
-        //     sdpSemantics: "unified-plan",
-        //     iceServers: [
-        //         stun,
-        //         {
-        //             'urls': turnServerHost,
-        //             'username': turnServerUsername,
-        //             'password': turnServerPassword,
-        //         },
+        var turnServersDefault = [
+            {
+                "urls": "turn:openrelay.metered.ca:80",
+                "username": "openrelayproject",
+                "credential": "openrelayproject",
+              },
+              {
+                "urls": "turn:openrelay.metered.ca:443",
+                "username": "openrelayproject",
+                "credential": "openrelayproject",
+              },
+              {
+                "urls": "turn:openrelay.metered.ca:443?transport=tcp",
+                "username": "openrelayproject",
+                "credential": "openrelayproject",
+              }
+        ]
+        iceServers.push(turnServersDefault)
         
-        //     ]
-        // }
         return {
             sdpSemantics: "unified-plan",
-            iceServers: [
-                stun,
-                  {
-                    "urls": "stun:openrelay.metered.ca:80",
-                  },
-                  turn,
-                  {
-                    "urls": "turn:openrelay.metered.ca:80",
-                    "username": "openrelayproject",
-                    "credential": "openrelayproject",
-                  },
-                  {
-                    "urls": "turn:openrelay.metered.ca:443",
-                    "username": "openrelayproject",
-                    "credential": "openrelayproject",
-                  },
-                  {
-                    "urls": "turn:openrelay.metered.ca:443?transport=tcp",
-                    "username": "openrelayproject",
-                    "credential": "openrelayproject",
-                  },
-            ]
+            iceServers: iceServers
         }
     }
     else
@@ -69,9 +65,7 @@ const configurationPeerConnection = ()=>{
 
         return {
             sdpSemantics: "unified-plan",
-            iceServers: [
-                stun,
-            ]
+            iceServers: iceServers
         }
     }
    

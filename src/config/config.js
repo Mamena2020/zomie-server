@@ -10,13 +10,15 @@ const configurationPeerConnection = ()=>{
 
     var allowTurnServer = process.env.ALLOW_TURN_SERVER =="true"?true:false   
 
-    var stun = {"urls": "stun:stun.stunprotocol.org"}
+    var stun1 = {"urls": "stun:stun.stunprotocol.org"}
+    var stun2 = {"urls": "stun:stun.l.google.com:19302"}
     var stun2 = {"urls": "stun:openrelay.metered.ca:80",}
 
     var iceServers = [];
 
-    // iceServers.push(stun)
-    // iceServers.push(stun2)
+    iceServers.push(stun1)
+    iceServers.push(stun2)
+    iceServers.push(stun3)
 
     if(allowTurnServer)
     {

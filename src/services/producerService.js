@@ -206,6 +206,7 @@ async function onIceCandidate(id) {
                     'sdpMid': String(e.candidate.sdpMid),
                     'sdpMLineIndex': e.candidate.sdpMLineIndex,
                 }
+                console.log(newCandidate);
                 var data = {
                         "candidate": newCandidate,
                         "producer_id": producers[id].id,

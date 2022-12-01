@@ -15,8 +15,8 @@ const configurationPeerConnection = ()=>{
 
     var iceServers = [];
 
-    iceServers.push(stun)
-    iceServers.push(stun2)
+    // iceServers.push(stun)
+    // iceServers.push(stun2)
 
     if(allowTurnServer)
     {
@@ -33,26 +33,31 @@ const configurationPeerConnection = ()=>{
                             'username': turnServerUsername,
                             'password': turnServerPassword,
                         }
-           iceServers.push(turn)
+        //    iceServers.push(turn)
            console.log("add aditional turn server")
         }
 
         var turnServersDefault = [
             {
-                "urls": "turn:openrelay.metered.ca:80",
+                "urls": "turns:staticauth.openrelay.metered.ca:443",
                 "username": "openrelayproject",
                 "credential": "openrelayproject",
               },
-              {
-                "urls": "turn:openrelay.metered.ca:443",
-                "username": "openrelayproject",
-                "credential": "openrelayproject",
-              },
-              {
-                "urls": "turn:openrelay.metered.ca:443?transport=tcp",
-                "username": "openrelayproject",
-                "credential": "openrelayproject",
-              }
+            // {
+            //     "urls": "turn:openrelay.metered.ca:80",
+            //     "username": "openrelayproject",
+            //     "credential": "openrelayproject",
+            //   },
+            //   {
+            //     "urls": "turn:openrelay.metered.ca:443",
+            //     "username": "openrelayproject",
+            //     "credential": "openrelayproject",
+            //   },
+            //   {
+            //     "urls": "turn:openrelay.metered.ca:443?transport=tcp",
+            //     "username": "openrelayproject",
+            //     "credential": "openrelayproject",
+            //   }
         ]
         iceServers.push(turnServersDefault)
         

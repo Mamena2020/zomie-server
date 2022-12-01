@@ -90,10 +90,10 @@ class Producer {
     }
 
     setMediaStream(producer_id)
+    onIceCandidate(producer_id)
     
     await sdpProcess(producer_id,sdp)
     onIceConnectionStateChange(producer_id)
-    onIceCandidate(producer_id)
     return producer_id;
 }
 

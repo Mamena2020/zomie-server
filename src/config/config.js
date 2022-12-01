@@ -26,7 +26,7 @@ const configurationPeerConnection = ()=>{
         var turnServerUsername = process.env.TURN_SERVER_USERNAME
         var turnServerPassword = process.env.TURN_SERVER_PASSWORD
 
-        if(turnServerHost!="")
+        if(turnServerHost!="" && turnServerHost.length>2)
         {
             var turn =  {
                             'urls': turnServerHost,
@@ -34,6 +34,7 @@ const configurationPeerConnection = ()=>{
                             'password': turnServerPassword,
                         }
            iceServers.push(turn)
+           console.log("add aditional turn server")
         }
 
         var turnServersDefault = [

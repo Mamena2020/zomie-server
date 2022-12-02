@@ -10,18 +10,42 @@ async function configurationPeerConnection(){
 
     var allowTurnServer = process.env.ALLOW_TURN_SERVER =="true" ||process.env.ALLOW_TURN_SERVER ==true?true:false   
 
-    var stun1 = {"urls": "stun:stun.stunprotocol.org"}
     // var stun2 = {"urls": "stun:stun.l.google.com:19302"}
 
     return {
         sdpSemantics: "unified-plan",
         iceServers: [
             {"urls": "stun:stun.stunprotocol.org"},
+             {
+                "urls": "stun:openrelay.metered.ca:80",
+                "username": "openrelayproject",
+                "credential": "openrelayproject",
+            },
+            {
+                "urls": "turn:openrelay.metered.ca:80",
+                "username": "openrelayproject",
+                "credential": "openrelayproject",
+            },
+            {
+                "urls": "turn:openrelay.metered.ca:443",
+                "username": "openrelayproject",
+                "credential": "openrelayproject",
+            },
+            {
+                "urls": "turn:openrelay.metered.ca:80?transport=tcp",
+                "username": "openrelayproject",
+                "credential": "openrelayproject",
+            },
+            {
+                "urls": "turn:openrelay.metered.ca:443?transport=tcp",
+                "username": "openrelayproject",
+                "credential": "openrelayproject",
+            },
             {
                 "urls": "turns:openrelay.metered.ca:443",
                 "username": "openrelayproject",
                 "credential": "openrelayproject",
-            }
+            },
         ]
     }
 
@@ -50,32 +74,7 @@ async function configurationPeerConnection(){
         }
 
         var turnServersDefault = [
-                //---------------------------- static auth
-                // {
-                //     "urls": "turns:staticauth.openrelay.metered.ca:443",
-                //     "username": "openrelayproject",
-                //     "credential": "openrelayproject",
-                // },
-                // {
-                //     "urls": "turn:staticauth.openrelay.metered.ca:443?transport=tcp",
-                //     "username": "openrelayproject",
-                //     "credential": "openrelayproject",
-                // },
-                // {
-                //     "urls": "turn:staticauth.openrelay.metered.ca:80?transport=tcp",
-                //     "username": "openrelayproject",
-                //     "credential": "openrelayproject",
-                // },
-                // {
-                //     "urls": "turn:staticauth.openrelay.metered.ca:443",
-                //     "username": "openrelayproject",
-                //     "credential": "openrelayproject",
-                // },
-                // {
-                //     "urls": "turn:staticauth.openrelay.metered.ca:80",
-                //     "username": "openrelayproject",
-                //     "credential": "openrelayproject",
-                // },
+             
                 // //---------------------------- open relay
                 // {
                 //     "urls": "stun:openrelay.metered.ca:80",

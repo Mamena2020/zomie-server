@@ -6,12 +6,24 @@
 
 //     ]
 // }
-function configurationPeerConnection(){
+async function configurationPeerConnection(){
 
     var allowTurnServer = process.env.ALLOW_TURN_SERVER =="true" ||process.env.ALLOW_TURN_SERVER ==true?true:false   
 
     var stun1 = {"urls": "stun:stun.stunprotocol.org"}
     // var stun2 = {"urls": "stun:stun.l.google.com:19302"}
+
+    return {
+        sdpSemantics: "unified-plan",
+        iceServers: [
+            {"urls": "stun:stun.stunprotocol.org"},
+            {
+                "urls": "turns:openrelay.metered.ca:443",
+                "username": "openrelayproject",
+                "credential": "openrelayproject",
+            }
+        ]
+    }
 
     var iceServers = [];
 

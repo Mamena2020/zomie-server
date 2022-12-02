@@ -66,6 +66,11 @@ class Producer {
         }
     }
     console.log("start create producer object")
+
+    var configurationPeerConnection =  await config.configurationPeerConnection();
+
+    console.log(configurationPeerConnection);
+
     var producer = new Producer(
         socket_id,
         room_id,
@@ -75,7 +80,7 @@ class Producer {
         has_video,
         has_audio,
         type, // user | screen
-        new webrtc.RTCPeerConnection(config.configurationPeerConnection, config.offerSdpConstraints),
+        new webrtc.RTCPeerConnection(configurationPeerConnection, config.offerSdpConstraints),
         // null , //
         new webrtc.MediaStream(),
         platform

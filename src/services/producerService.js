@@ -65,6 +65,12 @@ class Producer {
             console.log("exist before")
         }
     }
+    console.log("start create producer object")
+
+    var configurationPeerConnection =  await config.configurationPeerConnection();
+
+    console.log(configurationPeerConnection);
+
     var producer = new Producer(
         socket_id,
         room_id,
@@ -74,7 +80,7 @@ class Producer {
         has_video,
         has_audio,
         type, // user | screen
-        new webrtc.RTCPeerConnection(config.configurationPeerConnection, config.offerSdpConstraints),
+        new webrtc.RTCPeerConnection(configurationPeerConnection, config.offerSdpConstraints),
         // null , //
         new webrtc.MediaStream(),
         platform
@@ -90,10 +96,10 @@ class Producer {
     }
 
     setMediaStream(producer_id)
+    onIceCandidate(producer_id)
     
     await sdpProcess(producer_id,sdp)
     onIceConnectionStateChange(producer_id)
-    onIceCandidate(producer_id)
     return producer_id;
 }
 
@@ -174,6 +180,7 @@ async function onIceConnectionStateChange(id) {
     producers[id].peer.oniceconnectionstatechange = async(e) => {
         try {
             if (producers[id] != null) {
+                console.log("|oniceconnectionstatechange|:")
                 const connectionStatus2 = producers[id].peer.iceConnectionState;
                 if (["disconnected", "failed", "closed"].includes(connectionStatus2)) {
                     console.log("\x1b[31m", "producers: " + producers[id].id + " - " + connectionStatus2, "\x1b[0m")
@@ -205,6 +212,7 @@ async function onIceCandidate(id) {
                     'sdpMid': String(e.candidate.sdpMid),
                     'sdpMLineIndex': e.candidate.sdpMLineIndex,
                 }
+                console.log(newCandidate);
                 var data = {
                         "candidate": newCandidate,
                         "producer_id": producers[id].id,

@@ -65,6 +65,7 @@ class Producer {
             console.log("exist before")
         }
     }
+    console.log("start create producer object")
     var producer = new Producer(
         socket_id,
         room_id,

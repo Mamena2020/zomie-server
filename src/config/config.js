@@ -6,7 +6,7 @@
 
 //     ]
 // }
-const configurationPeerConnection = ()=>{
+function configurationPeerConnection(){
 
     var allowTurnServer = process.env.ALLOW_TURN_SERVER =="true" ||process.env.ALLOW_TURN_SERVER ==true?true:false   
 

@@ -8,15 +8,15 @@
 // }
 const configurationPeerConnection = ()=>{
 
-    var allowTurnServer = process.env.ALLOW_TURN_SERVER =="true"?true:false   
+    var allowTurnServer = process.env.ALLOW_TURN_SERVER =="true" ||process.env.ALLOW_TURN_SERVER ==true?true:false   
 
     var stun1 = {"urls": "stun:stun.stunprotocol.org"}
-    var stun2 = {"urls": "stun:stun.l.google.com:19302"}
+    // var stun2 = {"urls": "stun:stun.l.google.com:19302"}
 
     var iceServers = [];
 
     iceServers.push(stun1)
-    iceServers.push(stun2)
+    // iceServers.push(stun2)
 
     if(allowTurnServer)
     {

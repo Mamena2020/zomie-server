@@ -3,7 +3,7 @@
 
 Media server for <a href="https://github.com/Mamena2020/zomie-app"> zomie app</a>. 
 Server running on nodejs. Each client will have 1 active peer to handle broadcasting as well as a consumer, 
-this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">Socket.io</a> for signaling & messaging.
+this server using SFU architecture which features the following data transmission processes between the media server and the endpoints (client), <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">Socket.io</a> for signaling & messaging.
 
 This app also using TURN Server as relays media, work as a backup plan if STUN Server won't work because client device behind of symmetric NAT. TURN server is already end-to-end encrypted by the peers and the TURN Server cannot decode/read the encrypted packet, it just relays the packet to other peers. By default TURN already setup in file (lib/Services/WebRTC/Config/WRTCConfig.dart)
 using free TURN Servers from <a href="https://www.metered.ca/tools/openrelay/">OPEN RELAY</a>.

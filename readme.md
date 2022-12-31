@@ -14,7 +14,7 @@ but you can add your own Turn server using <a href="https://github.com/Mamena202
 #WebRTC Architecture - SFU (Selective Forwarding Unit)
 
 <a href="https://medium.com/securemeeting/webrtc-architecture-basics-p2p-sfu-mcu-and-hybrid-approaches-6e7d77a46a66">
-<img src="public/img/sfu.png" height="250">
+<img src="img/sfu.png" height="250">
 </a>
 
 

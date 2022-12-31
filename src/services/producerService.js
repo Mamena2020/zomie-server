@@ -67,11 +67,11 @@ class Producer {
     }
     console.log("start create producer object")
 
-    var configurationPeerConnection =  await config.configurationPeerConnection();
+    let configurationPeerConnection =  await config.configurationPeerConnection();
 
     console.log(configurationPeerConnection);
 
-    var producer = new Producer(
+    let producer = new Producer(
         socket_id,
         room_id,
         producer_id,
@@ -133,7 +133,7 @@ async function addTrackFromOtherUsers(id,room_id)
     {   
         for (let p in rooms[room_id].producers) {
             if (producers[p] != null && producers[p].stream!=null && p!=id) {
-                for(var tr of producers[p].stream.getTracks())
+                for(let tr of producers[p].stream.getTracks())
                 {
                    try
                    {
@@ -161,7 +161,7 @@ async function addTrackFromOtherUsers(id,room_id)
 async function sdpProcess(producer_id, sdp) {
     try {
         await handleRemoteSdp(producer_id,sdp)
-        const answer = await producers[producer_id].peer.createAnswer({ 'offerToReceiveVideo': 1});
+        let answer = await producers[producer_id].peer.createAnswer({ 'offerToReceiveVideo': 1});
         await producers[producer_id].peer.setLocalDescription(answer);
     } catch (e) {
         console.log(e);
@@ -181,7 +181,7 @@ async function onIceConnectionStateChange(id) {
         try {
             if (producers[id] != null) {
                 console.log("|oniceconnectionstatechange|:")
-                const connectionStatus2 = producers[id].peer.iceConnectionState;
+                let connectionStatus2 = producers[id].peer.iceConnectionState;
                 if (["disconnected", "failed", "closed"].includes(connectionStatus2)) {
                     console.log("\x1b[31m", "producers: " + producers[id].id + " - " + connectionStatus2, "\x1b[0m")
                     removeWhenDisconectedByID(id)

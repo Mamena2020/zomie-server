@@ -3,26 +3,25 @@
 
 Media server for <a href="https://github.com/Mamena2020/zomie-app"> zomie app</a>. 
 Server running on nodejs. Each client will have 1 active peer to handle broadcasting as well as a consumer, 
-this server using SFU for routing method, <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">Socket.io</a> for signaling & messaging.
+this server using SFU architecture which features the following data transmission processes between the media server and the endpoints (client), <a href="https://webrtc.org">WebRTC</a> for media real-time communication, and <a href="https://socket.io">Socket.io</a> for signaling & messaging.
 
-This server also using <a href="https://github.com/Mamena2020/zomie-turn-server"> TURN Server </a> as relays media,
-<a href="https://github.com/Mamena2020/zomie-turn-server"> TURN Server </a> work as a backup if STUN Server won't work because client device behind of symmetric NAT
-
-
-
+This app also using TURN Server as relays media, work as a backup plan if STUN Server won't work because client device behind of symmetric NAT. TURN server is already end-to-end encrypted by the peers and the TURN Server cannot decode/read the encrypted packet, it just relays the packet to other peers. By default TURN already setup in file (lib/Services/WebRTC/Config/WRTCConfig.dart)
+using free TURN Servers from <a href="https://www.metered.ca/tools/openrelay/">OPEN RELAY</a>.
+but you can add your own Turn server using <a href="https://github.com/Mamena2020/zomie-turn-server">Zomie TURN Server </a> as relays media.
 
 
 
 #WebRTC Architecture - SFU (Selective Forwarding Unit)
 
 <a href="https://medium.com/securemeeting/webrtc-architecture-basics-p2p-sfu-mcu-and-hybrid-approaches-6e7d77a46a66">
-<img src="public/img/sfu.png" height="250">
+<img src="img/sfu.png" height="250">
 </a>
 
 
 #how to use
   - config
-    - create your .env from .env.example, & fill the credential
+    - create your .env from .env.example, & fill the credential.
+     you can ignore (TURN_SERVER_HOST, TURN_SERVER_USERNAME, TURN_SERVER_PASSWORD), because by default its already setup, but its okay if you want to add more your own TURN server.
     ```
       # MEDIA SERVER CONFIG
       HOST="localhost"
@@ -31,7 +30,7 @@ This server also using <a href="https://github.com/Mamena2020/zomie-turn-server"
       ROOM_MONITOR_INTERVAL = 60000 # 1 minute  
       # 1000 * 60
 
-      ALLOW_TURN_SERVER = "true"  # "true" or "false"
+      ALLOW_TURN_SERVER = "false"  # "true" or "false"
       TURN_SERVER_HOST = "turn:ip:port" #example: "turn:192.168.1.9:3478"
       TURN_SERVER_USERNAME = "zomie"
       TURN_SERVER_PASSWORD = "password"
@@ -53,7 +52,7 @@ This server also using <a href="https://github.com/Mamena2020/zomie-turn-server"
   - STUNT/TURN server
      - STUNT:  "urls": "stun:stun.stunprotocol.org"
         - Stunt will not working if client is under symmetric NAT. 
-     - TURN: <a href="https://github.com/Mamena2020/zomie-turn-server">Zomie TURN Server </a>
+     - TURN: by default TURN server using from <a href="https://www.metered.ca/tools/openrelay">Open Relay</a>, or you can add more using <a href="https://github.com/Mamena2020/zomie-turn-server">Zomie TURN Server </a>
 
 - socket io
   -  version match info[1]

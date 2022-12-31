@@ -1,6 +1,6 @@
-const {rooms,producers}  = require('../data')
+const { rooms, producers } = require('../data')
 const utils = require('../utils')
-const roomService =  require('../services/roomService')
+const roomService = require('../services/roomService')
 const producerService = require('../services/producerService')
 const socketfunction = require("../socket/socketfunction")
 
@@ -11,10 +11,9 @@ const socketfunction = require("../socket/socketfunction")
  * string id (required)
  * @return json
  */
-async function get(req,res)
-{   
+async function get(req, res) {
     var id = req.query.id;
-    return roomService.get(id,res)
+    return roomService.get(id, res)
 }
 
 /**
@@ -29,11 +28,10 @@ async function get(req,res)
  * }
  * @return json
  */
-async function check({body},res)
-{
+async function check({ body }, res) {
     var id = body.room_id
     var password = body.password
-    return roomService.check(id,password,res)
+    return roomService.check(id, password, res)
 }
 
 
@@ -51,32 +49,35 @@ async function check({body},res)
 async function create({ body }, res) {
     try {
 
-        var password = body.password
-        if (password == undefined || password == null) {
-            password = null
+        var password = null
+        if (body.password != undefined && body.password != null) {
+            password = body.password
         }
-        var video_bitrate = body.video_bitrate
-        if (video_bitrate == undefined || video_bitrate == null) {
-            video_bitrate = 90
+        var video_bitrate = 90
+        if (body.video_bitrate != undefined && body.video_bitrate != null) {
+            video_bitrate = body.video_bitrate
         }
-        var screen_bitrate = body.screen_bitrate
-        if (screen_bitrate == undefined || screen_bitrate == null) {
-            screen_bitrate = 250
+        var screen_bitrate = 250
+        if (body.screen_bitrate != undefined && body.screen_bitrate != null) {
+            screen_bitrate = body.screen_bitrate
         }
 
         var life_time = 1
         if (body.life_time != undefined || body.life_time != null) {
-           life_time= body.life_time
+            life_time = body.life_time
         }
 
-        var id = await roomService.create(password, life_time, video_bitrate,screen_bitrate)
+        var id = await roomService.create(password, life_time, video_bitrate, screen_bitrate)
+        
         if (id == null || id == undefined) {
             throw "failed to create room"
         }
+
         console.log("\x1b[34m", "Room created: " + rooms[id].id, "\x1b[0m")
         console.log("\x1b[34m", "password: " + rooms[id].password, "\x1b[0m")
         console.log("\x1b[34m", "life time: " + rooms[id].life_time, "\x1b[0m")
         console.log(rooms[id])
+
         var data = {
             room_id: id,
         }
@@ -143,8 +144,7 @@ async function join({ body }, res) {
 
         var socket = await socketfunction.getSocketById(body.socket_id)
 
-        if(socket == null || socket == undefined)
-        {
+        if (socket == null || socket == undefined) {
             statusCode = 403;
             data = {
                 "message": "failed to join",
@@ -177,18 +177,18 @@ async function join({ body }, res) {
         // --------------------------------- send back sdp to client
         // console.log("sdp local")
         var sdp = await producers[producer_id].peer.localDescription
-        var    newsdp = await utils.sdpToJsonString(sdp)
-       
+        var newsdp = await utils.sdpToJsonString(sdp)
+
         statusCode = 200
         data = {
             "message": "success join",
             "data": {
                 sdp: newsdp,
-                room_id:room_id,
+                room_id: room_id,
                 producer_id: producers[producer_id].id,
                 user_id: producers[producer_id].user_id,
                 user_name: producers[producer_id].name,
-                producers : producerService.getProducersFromRoom(room_id) 
+                producers: producerService.getProducersFromRoom(room_id)
             }
         }
     } catch (e) {
@@ -206,7 +206,7 @@ async function join({ body }, res) {
 /** Get all active room
  * @return json
  */
-async function gets(req, res)  {
+async function gets(req, res) {
     var _rooms = []
     for (let r in rooms) {
         _rooms.push({
@@ -223,7 +223,7 @@ async function gets(req, res)  {
             "user_id": producers[p].user_id,
             "name": producers[p].name,
             "socket_id": producers[p].socket_id,
-            "stream_id": producers[p].stream!=null?producers[p].stream.id:'-',
+            "stream_id": producers[p].stream != null ? producers[p].stream.id : '-',
             "has_video": producers[p].has_video,
             "has_audio": producers[p].has_audio,
             "platform": producers[p].platform,

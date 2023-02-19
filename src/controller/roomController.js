@@ -68,7 +68,7 @@ async function create({ body }, res) {
         }
 
         var id = await roomService.create(password, life_time, video_bitrate, screen_bitrate)
-        
+
         if (id == null || id == undefined) {
             throw "failed to create room"
         }
@@ -118,6 +118,7 @@ async function join({ body }, res) {
     var data = {};
     var statusCode = 200
     try {
+        
         console.log("join room")
         console.log("id: " + body.producer_id)
         console.log("user id: " + body.user_id)
@@ -129,13 +130,13 @@ async function join({ body }, res) {
         console.log("platform: " + body.platform)
 
 
-        if (rooms[body.room_id] == null) {
+        if (!rooms[body.room_id]) {
             statusCode = 404;
             data = {
                 "message": "room not found",
                 "data": {}
             }
-            throw "room not found"
+            return res.status(statusCode).json(data)
         }
         // var use_sdp_transform = body.use_sdp_transform;
         // if ( use_sdp_transform == null || use_sdp_transform== undefined) {
@@ -144,13 +145,13 @@ async function join({ body }, res) {
 
         var socket = await socketfunction.getSocketById(body.socket_id)
 
-        if (socket == null || socket == undefined) {
+        if (!socket) {
             statusCode = 403;
             data = {
                 "message": "failed to join",
                 "data": {}
             }
-            throw "failed to join"
+            return res.status(statusCode).json(data)
         }
 
         var producer_id = await producerService.create(
@@ -166,16 +167,16 @@ async function join({ body }, res) {
             body.platform
         )
         let room_id = await producerService.addToRoom(body.room_id, producer_id)
-        if (producers[producer_id] == null || room_id == null) {
+        if (!producers[producer_id] || !room_id) {
             statusCode = 427
             data = {
                 "message": "failed join room",
                 "data": {}
             }
-            throw "failed to join room"
+            return res.status(statusCode).json(data)
         }
         // --------------------------------- send back sdp to client
-        // console.log("sdp local")
+
         var sdp = await producers[producer_id].peer.localDescription
         var newsdp = await utils.sdpToJsonString(sdp)
 
@@ -185,6 +186,7 @@ async function join({ body }, res) {
             "data": {
                 sdp: newsdp,
                 room_id: room_id,
+                room_password: rooms[room_id].password ?? null,
                 producer_id: producers[producer_id].id,
                 user_id: producers[producer_id].user_id,
                 user_name: producers[producer_id].name,
@@ -199,8 +201,7 @@ async function join({ body }, res) {
         }
         console.log(e)
     }
-    res.status(statusCode)
-    res.json(data)
+    return res.status(statusCode).json(data)
 
 }
 /** Get all active room
